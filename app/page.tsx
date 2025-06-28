@@ -9,7 +9,7 @@ export default function Home() {
   const router = useRouter();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [postcodeInput, setPostcodeInput] = useState("");
+  const [postcowdeInput, setPostcodeInput] = useState("");
   const [isGeocodingPostcode, setIsGeocodingPostcode] = useState(false);
   const [postcodeError, setPostcodeError] = useState<string | null>(null);
 
