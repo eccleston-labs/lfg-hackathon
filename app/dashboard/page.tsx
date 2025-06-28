@@ -111,7 +111,7 @@ export default function DashboardPage() {
       }, {} as Record<string, number>);
 
       const topCrimeTypes = Object.entries(crimeTypeCounts)
-        .map(([type, count]) => ({ type, count }))
+        .map(([type, count]) => ({ type, count: count as number }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
@@ -123,7 +123,7 @@ export default function DashboardPage() {
       }, {} as Record<string, number>);
 
       const topPostcodes = Object.entries(postcodeCounts)
-        .map(([postcode, count]) => ({ postcode, count }))
+        .map(([postcode, count]) => ({ postcode, count: count as number }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
