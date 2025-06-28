@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import MapContainer to avoid SSR issues
@@ -16,9 +16,34 @@ const TileLayer = dynamic(
   { ssr: false }
 );
 
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
+
+interface Report {
+  id: string;
+  created_at: string;
+  raw_text: string;
+  postcode: string;
+  location_hint: string;
+  time_description: string;
+  crime_type: string;
+  status: string;
+  people_appearance?: string;
+  has_vehicle: boolean;
+  has_weapon: boolean;
+}
+
 export default function MapPage() {
   const supabase = createClient();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [formData, setFormData] = useState({
     postcode: "",
     addressDetails: "",
@@ -30,6 +55,62 @@ export default function MapPage() {
     hasVehicle: false,
     hasWeapon: false,
   });
+
+  // Load reports on component mount
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      setIsLoadingReports(true);
+      const { data, error } = await supabase
+        .from("reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading reports:", error);
+        return;
+      }
+
+      console.log("Loaded reports:", data);
+      setReports(data || []);
+    } catch (error) {
+      console.error("Unexpected error loading reports:", error);
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
+  // Simple postcode to coordinates conversion (UK-focused)
+  // In production, you'd want to use a proper geocoding service
+  const postcodeToCoords = (postcode: string): [number, number] | null => {
+    // This is a very basic mapping - in production use a geocoding API
+    const postcodeMap: { [key: string]: [number, number] } = {
+      "S10 5GG": [53.3781, -1.4816], // Sheffield
+      "SW1A 1AA": [51.5014, -0.1419], // London
+      "M1 1AA": [53.4808, -2.2426], // Manchester
+      "B1 1AA": [52.4862, -1.8904], // Birmingham
+    };
+
+    const normalized = postcode.toUpperCase().trim();
+
+    // Check for exact match first
+    if (postcodeMap[normalized]) {
+      return postcodeMap[normalized];
+    }
+
+    // Extract postcode area (first part) for approximate location
+    const postcodeArea = normalized.split(" ")[0];
+    if (postcodeArea.startsWith("S1")) return [53.3781, -1.4816]; // Sheffield area
+    if (postcodeArea.startsWith("SW")) return [51.5014, -0.1419]; // London SW
+    if (postcodeArea.startsWith("M1")) return [53.4808, -2.2426]; // Manchester
+    if (postcodeArea.startsWith("B1")) return [52.4862, -1.8904]; // Birmingham
+
+    // Default to London if no match
+    return [51.505, -0.09];
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -87,6 +168,9 @@ export default function MapPage() {
       alert("Report submitted successfully!");
       setIsReportModalOpen(false);
 
+      // Reload reports to show the new one
+      await loadReports();
+
       // Reset form
       setFormData({
         postcode: "",
@@ -141,6 +225,65 @@ export default function MapPage() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Report Markers */}
+        {reports.map((report) => {
+          const coords = postcodeToCoords(report.postcode);
+          if (!coords) return null;
+
+          return (
+            <Marker key={report.id} position={coords}>
+              <Popup>
+                <div className="p-2 max-w-xs">
+                  <div className="font-bold text-lg mb-2 capitalize">
+                    {report.crime_type || "Crime Report"}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold">Location:</span>{" "}
+                      {report.postcode}
+                      {report.location_hint && ` - ${report.location_hint}`}
+                    </div>
+                    {report.time_description && (
+                      <div>
+                        <span className="font-semibold">When:</span>{" "}
+                        {report.time_description}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold">Description:</span>{" "}
+                      {report.raw_text}
+                    </div>
+                    {report.people_appearance && (
+                      <div>
+                        <span className="font-semibold">
+                          Description of people:
+                        </span>{" "}
+                        {report.people_appearance}
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      {report.has_vehicle && (
+                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                          Vehicle
+                        </span>
+                      )}
+                      {report.has_weapon && (
+                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                          Weapon
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      Reported:{" "}
+                      {new Date(report.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
 
       {/* Report Button */}
@@ -150,6 +293,21 @@ export default function MapPage() {
       >
         Report
       </button>
+
+      {/* Reports Info */}
+      <div className="absolute top-6 left-6 bg-white rounded-lg shadow-lg p-3 z-[1000] border">
+        {isLoadingReports ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+            <span className="text-sm font-medium">Loading reports...</span>
+          </div>
+        ) : (
+          <div className="text-sm font-medium">
+            <span className="text-blue-600">{reports.length}</span> reports on
+            map
+          </div>
+        )}
+      </div>
 
       {/* Report Modal */}
       {isReportModalOpen && (
