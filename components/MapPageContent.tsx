@@ -63,7 +63,7 @@ export const MapPageContent = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d={isSidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+            d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"}
           />
         </svg>
       </button>
