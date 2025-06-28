@@ -1,10 +1,12 @@
 import { FormEvent, ChangeEvent } from "react";
-import { ReportFormData } from "@/types";
+import { ReportFormData, OSMPlace } from "@/types";
 import { ImageUpload } from "./ImageUpload";
+import { PlaceSearch } from "./PlaceSearch";
 
 interface ReportFormProps {
   formData: ReportFormData;
   onInputChange: (field: string, value: string | boolean) => void;
+  onPlaceSelect: (place: OSMPlace | undefined) => void;
   onSubmit: (e: FormEvent) => void;
   selectedImages: File[];
   onImageSelect: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -16,6 +18,7 @@ interface ReportFormProps {
 export const ReportForm = ({
   formData,
   onInputChange,
+  onPlaceSelect,
   onSubmit,
   selectedImages,
   onImageSelect,
@@ -81,6 +84,22 @@ export const ReportForm = ({
             className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none"
             placeholder="Additional location details..."
           />
+        </div>
+
+        {/* Place Search */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Search for a specific place or landmark (optional)
+          </label>
+          <PlaceSearch
+            selectedPlace={formData.selectedPlace}
+            onPlaceSelect={onPlaceSelect}
+            placeholder="e.g. Sheffield University, Meadowhall Shopping Centre..."
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            This helps provide more precise location information alongside your
+            postcode
+          </p>
         </div>
 
         {/* When it happened */}
