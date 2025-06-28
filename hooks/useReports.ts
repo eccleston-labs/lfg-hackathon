@@ -5,12 +5,11 @@ import { useGeocoding } from "./useGeocoding";
 import wkx from "wkx";
 
 function parseWKB(locationBuffer: string) {
-  if (!locationBuffer)
-    return null;
-  const buffer = Buffer.from(locationBuffer, 'hex');
+  if (!locationBuffer) return null;
+  const buffer = Buffer.from(locationBuffer, "hex");
   const geom = wkx.Geometry.parse(buffer);
-  
-if (geom instanceof wkx.Point) {
+
+  if (geom instanceof wkx.Point) {
     return [geom.x, geom.y]; // [lon, lat]
   } else {
     throw new Error(`Expected Point geometry, got ${geom?.constructor?.name}`);
@@ -66,13 +65,20 @@ export const useReports = () => {
 
       // Duplicate location field into coordinates
       const reportsWithCoords = reportsWithPhotos.map((report) => {
-          console.log(report.location)
-          return {
-            ...report,
-            coordinates: parseWKB(report.location),
-          };
-        });
-      
+        console.log(report.location);
+        const parsedCoords = parseWKB(report.location);
+        const coordinates: [number, number] | undefined =
+          parsedCoords &&
+          Array.isArray(parsedCoords) &&
+          parsedCoords.length === 2
+            ? [parsedCoords[0], parsedCoords[1]]
+            : undefined;
+
+        return {
+          ...report,
+          coordinates,
+        };
+      });
 
       console.log("Reports with coordinates:", reportsWithCoords);
       console.log(
@@ -92,9 +98,34 @@ export const useReports = () => {
     loadReports();
   }, [loadReports]);
 
+  const addReport = useCallback((newReport: Report) => {
+    try {
+      // Process the new report the same way as in loadReports
+      const parsedCoords = parseWKB(newReport.location);
+      const coordinates: [number, number] | undefined =
+        parsedCoords && Array.isArray(parsedCoords) && parsedCoords.length === 2
+          ? [parsedCoords[0], parsedCoords[1]]
+          : undefined;
+
+      const reportWithCoords: Report = {
+        ...newReport,
+        coordinates,
+        photos: [], // New reports start with no photos
+      };
+
+      console.log("Adding real-time report:", reportWithCoords);
+
+      // Add to the beginning of the array (newest first)
+      setReports((prevReports) => [reportWithCoords, ...prevReports]);
+    } catch (error) {
+      console.error("Error adding real-time report:", error);
+    }
+  }, []);
+
   return {
     reports,
     isLoadingReports,
     loadReports,
+    addReport,
   };
 };

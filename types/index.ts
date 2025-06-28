@@ -3,6 +3,7 @@ export interface Report {
   created_at: string;
   raw_text: string;
   postcode: string;
+  location: string; // WKB format from database
   location_hint: string;
   time_description: string;
   crime_type: string;
