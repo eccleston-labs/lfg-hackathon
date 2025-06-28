@@ -1,18 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapHeader } from "./MapHeader";
 import { NearbyReportsSidebar } from "./NearbyReportsSidebar";
 import { InteractiveMap } from "./InteractiveMap";
 import { ReportButton } from "./ReportButton";
 import { ReportModal } from "./ReportModal/ReportModal";
+import { RealtimeTest } from "./RealtimeTest";
 import { useReports } from "../hooks/useReports";
 import { useMapBounds } from "../hooks/useMapBounds";
+import { useRealtimeReports } from "../hooks/useRealtimeReports";
+import { Report } from "@/types";
 
 export const MapPageContent = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const { reports, isLoadingReports, loadReports } = useReports();
+  const { reports, isLoadingReports, loadReports, addReport } = useReports();
   const { mapBounds, setMapBounds, nearbyReports } = useMapBounds(reports);
+
+  // Stable callback for new reports
+  const handleNewReport = useCallback(
+    (newReport: Report) => {
+      console.log("Adding new report to map:", newReport);
+      addReport(newReport);
+    },
+    [addReport]
+  );
+
+  // Set up realtime subscription for new reports
+  const { isConnected } = useRealtimeReports({
+    onNewReport: handleNewReport,
+    enabled: true,
+  });
 
   // Handle escape key to close sidebar on mobile
   useEffect(() => {
@@ -29,6 +47,19 @@ export const MapPageContent = () => {
   return (
     <main className="h-screen flex flex-col">
       <MapHeader />
+
+      {/* Realtime Status Indicator (dev only) */}
+      {process.env.NODE_ENV === "development" && (
+        <div
+          className={`fixed top-2 right-2 z-[9999] px-2 py-1 rounded text-xs ${
+            isConnected
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          Realtime: {isConnected ? "Connected" : "Disconnected"}
+        </div>
+      )}
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
@@ -75,6 +106,9 @@ export const MapPageContent = () => {
         onClose={() => setIsReportModalOpen(false)}
         onReportSubmitted={loadReports}
       />
+
+      {/* Temporary debug component */}
+      <RealtimeTest />
     </main>
   );
 };
