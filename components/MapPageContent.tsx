@@ -28,11 +28,11 @@ export const MapPageContent = () => {
   }, [isSidebarOpen]);
 
   return (
-    <main className="relative h-screen w-full flex flex-col">
+    <main className="h-screen flex flex-col">
       <MapHeader />
 
       {/* Main content area */}
-      <div className="flex-1 flex relative">
+      <div className="flex-1 flex overflow-hidden">
         <NearbyReportsSidebar
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
