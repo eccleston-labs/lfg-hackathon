@@ -2,7 +2,8 @@
 
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import MapContainer to avoid SSR issues
@@ -75,8 +76,9 @@ const isWithinBounds = (
   );
 };
 
-export default function MapPage() {
+function MapPageContent() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
@@ -142,6 +144,27 @@ export default function MapPage() {
     }
   };
 
+  // Get map center from URL parameters or default to London
+  const getMapCenter = (): [number, number] => {
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    
+    if (lat && lng) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+      
+      // Validate coordinates are reasonable (within world bounds)
+      if (!isNaN(latitude) && !isNaN(longitude) && 
+          latitude >= -90 && latitude <= 90 && 
+          longitude >= -180 && longitude <= 180) {
+        return [latitude, longitude];
+      }
+    }
+    
+    // Default to London coordinates
+    return [51.505, -0.09];
+  };
+
   // Force map remount on component mount to prevent initialization errors
   useEffect(() => {
     setMapKey((prev) => prev + 1);
@@ -201,47 +224,22 @@ export default function MapPage() {
         return;
       }
 
-      // Load photos for all reports
-      const { data: photosData, error: photosError } = await supabase
-        .from("report_photos")
-        .select("*");
-
-      if (photosError) {
-        console.error("Error loading photos:", photosError);
-        // Continue without photos if there's an error
-      }
-
       console.log("Loaded reports from DB:", reportsData);
-      console.log("Loaded photos from DB:", photosData);
 
-      // Group photos by report_id
-      const photosByReportId = (photosData || []).reduce((acc, photo) => {
-        if (!acc[photo.report_id]) {
-          acc[photo.report_id] = [];
-        }
-        acc[photo.report_id].push(photo);
-        return acc;
-      }, {} as Record<string, any[]>);
-
-      // Geocode postcodes for all reports and attach photos
+      // Geocode postcodes for all reports
       const reportsWithCoords = await Promise.all(
         (reportsData || []).map(async (report) => {
           console.log(`Geocoding postcode: ${report.postcode}`);
           const coords = await postcodeToCoords(report.postcode);
           console.log(`Geocoded ${report.postcode} to:`, coords);
-
-          // Get photos for this report
-          const reportPhotos = photosByReportId[report.id] || [];
-
           return {
             ...report,
             coordinates: coords,
-            photos: reportPhotos,
           };
         })
       );
 
-      console.log("Reports with coordinates and photos:", reportsWithCoords);
+      console.log("Reports with coordinates:", reportsWithCoords);
       console.log(
         "Reports that will render (have coordinates):",
         reportsWithCoords.filter((r) => r.coordinates)
@@ -567,7 +565,7 @@ export default function MapPage() {
         <div className="flex-1 relative">
           <MapContainer
             key={`main-map-${mapKey}`}
-            center={[51.505, -0.09]} // London coordinates
+            center={getMapCenter()}
             zoom={13}
             className="h-full w-full"
             zoomControl={true}
@@ -941,5 +939,18 @@ export default function MapPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        <span className="ml-2">Loading map...</span>
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }
