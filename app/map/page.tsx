@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 
@@ -54,7 +54,7 @@ const createSimpleMarker = () => {
   });
 };
 
-export default function MapPage() {
+function MapPageContent() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -139,10 +139,6 @@ export default function MapPage() {
   };
 
   // Load reports on component mount
-  useEffect(() => {
-    loadReports();
-  }, []);
-
   const loadReports = async () => {
     try {
       setIsLoadingReports(true);
@@ -185,6 +181,10 @@ export default function MapPage() {
     }
   };
 
+  useEffect(() => {
+    loadReports();
+  }, []);
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -226,23 +226,13 @@ export default function MapPage() {
         .select();
 
       if (error) {
-        console.error("Supabase error details:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          reportData: reportData,
-        });
-        alert(`Error submitting report: ${error.message}`);
+        console.error("Error submitting report:", error);
+        alert("Error submitting report. Please try again.");
         return;
       }
 
       console.log("Report submitted successfully:", data);
       alert("Report submitted successfully!");
-      setIsReportModalOpen(false);
-
-      // Reload reports to show the new one
-      await loadReports();
 
       // Reset form
       setFormData({
@@ -256,30 +246,28 @@ export default function MapPage() {
         hasVehicle: false,
         hasWeapon: false,
       });
+
+      // Close modal
+      setIsReportModalOpen(false);
+
+      // Reload reports to show the new one
+      loadReports();
     } catch (error) {
-      console.error("Unexpected error during submission:", {
-        error: error,
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        formData: formData,
-      });
-      alert(
-        `Unexpected error occurred: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      console.error("Unexpected error submitting report:", error);
+      alert("Unexpected error. Please try again.");
     }
   };
 
   const fillTestData = () => {
     setFormData({
       postcode: "S10 5GG",
-      addressDetails: "Outside Tesco Metro, 123 High Street",
-      whenHappened: "Yesterday around 3:30 PM",
-      whatHappened: "Shoplifting - person took items from store without paying",
-      peopleDetails: "Male, approximately 20 years old, lives locally",
+      addressDetails: "Near the university campus, close to the main library",
+      whenHappened: "Yesterday evening around 8 PM",
+      whatHappened:
+        "Witnessed a bike theft outside the library. Two individuals were using bolt cutters to break a bike lock. They took a red mountain bike and fled towards the main road.",
+      peopleDetails: "Two males, appeared to be in their early 20s",
       peopleAppearance:
-        "Male, 20 years old, 5'8\", brown hair, wearing dark hoodie and jeans",
+        "Both wearing dark hoodies and jeans. One was taller with a beard, the other shorter with a baseball cap.",
       contactDetails: "No known contact details",
       hasVehicle: false,
       hasWeapon: false,
@@ -614,5 +602,18 @@ export default function MapPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        <span className="ml-2">Loading map...</span>
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }
