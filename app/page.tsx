@@ -142,79 +142,113 @@ export default function Home() {
           </div>
 
           {/* Search Section */}
-          <div className="space-y-4 sm:space-y-5 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-            {/* Postcode Input */}
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <input
-                  type="text"
-                  value={postcodeInput}
-                  onChange={(e) => setPostcodeInput(e.target.value)}
-                  onKeyPress={handlePostcodeKeyPress}
-                  placeholder="Enter a UK postcode"
-                  className="flex-1 px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors w-full"
-                />
+          <div className="max-w-lg mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Get Started
+              </h3>
+
+              {/* Postcode Input */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={postcodeInput}
+                      onChange={(e) => setPostcodeInput(e.target.value)}
+                      onKeyPress={handlePostcodeKeyPress}
+                      placeholder="Enter a UK postcode (e.g. SW1A 1AA)"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
+                    />
+                    {postcodeError && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {postcodeError}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handlePostcodeGo}
+                    disabled={isGeocodingPostcode}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    {isGeocodingPostcode ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      </div>
+                    ) : (
+                      <span className="flex items-center">
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                        Search
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Location Button */}
                 <button
                   type="button"
-                  onClick={handlePostcodeGo}
-                  disabled={isGeocodingPostcode}
-                  className="px-6 sm:px-8 py-3 sm:py-3.5 md:py-4 bg-blue-600 text-white text-sm sm:text-base md:text-lg font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-w-[80px] sm:min-w-[100px]"
+                  onClick={handleUseMyLocation}
+                  disabled={isGettingLocation}
+                  className="w-full bg-gray-900 text-white font-semibold py-3 px-4 rounded-xl hover:bg-gray-800 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {isGeocodingPostcode ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  {isGettingLocation ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      <span>Getting your location...</span>
                     </div>
                   ) : (
-                    "Go"
+                    <span className="flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      Use my current location
+                    </span>
                   )}
                 </button>
-              </div>
 
-              {/* Postcode Error */}
-              {postcodeError && (
-                <div className="text-red-600 text-xs sm:text-sm p-3 bg-red-50 border border-red-200 rounded-lg text-left">
-                  {postcodeError}
-                </div>
-              )}
-            </div>
-
-            {/* Location Button */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleUseMyLocation}
-                disabled={isGettingLocation}
-                className="w-full bg-gray-900 text-white text-sm sm:text-base md:text-lg font-semibold py-3 sm:py-3.5 md:py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-800 active:bg-gray-950 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGettingLocation ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    <span>Getting your location...</span>
+                {locationError && (
+                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
+                    {locationError}
                   </div>
-                ) : (
-                  "Use my location"
                 )}
-              </button>
-
-              {/* Location Error */}
-              {locationError && (
-                <div className="text-red-600 text-xs sm:text-sm p-3 bg-red-50 border border-red-200 rounded-lg text-left">
-                  {locationError}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Additional Info Section */}
-          <div className="pt-4 sm:pt-6 lg:pt-8">
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-xs sm:text-sm text-gray-500">
-                Help your community stay safe by reporting incidents you witness
-              </p>
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-400">
-                <span>📍 View local reports</span>
-                <span>📝 Submit anonymously</span>
-                <span>🗺️ Interactive map</span>
               </div>
             </div>
           </div>
