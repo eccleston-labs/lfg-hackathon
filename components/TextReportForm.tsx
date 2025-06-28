@@ -218,6 +218,34 @@ export default function TextReportForm({
         />
       </div>
 
+      {/* CrimeStoppers Checkbox */}
+      <div className="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          id="submitToCrimeStoppers"
+          checked={formData.submitToCrimeStoppers}
+          onChange={(e) =>
+            onInputChange("submitToCrimeStoppers", e.target.checked)
+          }
+          className="w-5 h-5 mt-0.5"
+        />
+        <label
+          htmlFor="submitToCrimeStoppers"
+          className="text-sm font-semibold text-gray-700 cursor-pointer"
+        >
+          Submit report to{" "}
+          <a
+            href="https://crimestoppers-uk.org/give-information/forms/pre-form"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Crimestoppers UK
+          </a>
+        </label>
+      </div>
+
       {/* Submit Button */}
       <button
         type="submit"

@@ -35,6 +35,7 @@ export const ReportModal = ({
     hasWeapon: false,
     selectedPlace: undefined,
     inputMode: "text",
+    submitToCrimeStoppers: true,
   });
   const supabase = createClient();
 
@@ -238,13 +239,21 @@ export const ReportModal = ({
 
       // Validate input based on mode
       if (formData.inputMode === "text") {
+        // Simple text mode - only needs whatHappened
+        if (!formData.whatHappened.trim()) {
+          alert("Please describe what happened");
+          setIsUploading(false);
+          return;
+        }
+      } else if (formData.inputMode === "manual") {
+        // Manual/detailed mode - needs full validation
         if (!formData.whatHappened.trim()) {
           alert("Please describe what happened");
           setIsUploading(false);
           return;
         }
 
-        // Validate postcode for text mode
+        // Validate postcode for manual mode
         const loc_gps = await postcodeToCoordsPoint(formData.postcode);
         if (!loc_gps) {
           setPostcodeError(
@@ -275,9 +284,13 @@ export const ReportModal = ({
       let loc_gps: string | null = null;
 
       if (formData.inputMode === "text") {
+        // Simple text mode - use default Sheffield location
+        loc_gps = "POINT(53.3811 -1.4701)"; // Sheffield city center
+      } else if (formData.inputMode === "manual") {
+        // Manual mode - use provided postcode
         loc_gps = await postcodeToCoordsPoint(formData.postcode);
       } else {
-        // For audio mode, try to extract postcode from location or use a default
+        // Audio mode - try to extract from parsed data or use default
         if (parsedData?.location) {
           // Try to extract a postcode from the location string
           const postcodeMatch = parsedData.location.match(
@@ -307,12 +320,14 @@ export const ReportModal = ({
       // Prepare report data based on input mode
       const reportData = {
         raw_text:
-          formData.inputMode === "text"
+          formData.inputMode === "text" || formData.inputMode === "manual"
             ? formData.whatHappened
             : parsedData?.description ||
               "Audio report - see location_hint for details",
         postcode:
           formData.inputMode === "text"
+            ? "TEXT" // Simple text mode doesn't have postcode
+            : formData.inputMode === "manual"
             ? formData.postcode
             : parsedData?.location?.match(
                 /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i
@@ -320,6 +335,8 @@ export const ReportModal = ({
         location: loc_gps,
         location_hint:
           formData.inputMode === "text"
+            ? "" // Simple text mode has no location details
+            : formData.inputMode === "manual"
             ? formData.addressDetails +
               (formData.selectedPlace
                 ? ` | Selected place: ${formData.selectedPlace.display_name}`
@@ -328,14 +345,20 @@ export const ReportModal = ({
         incident_date: null, // We could parse this from time_description in the future
         time_description:
           formData.inputMode === "text"
+            ? "" // Simple text mode has no time details
+            : formData.inputMode === "manual"
             ? formData.whenHappened
             : parsedData?.timeOfIncident || "",
         time_known:
           formData.inputMode === "text"
+            ? false // Simple text mode doesn't capture time
+            : formData.inputMode === "manual"
             ? Boolean(formData.whenHappened.trim())
             : Boolean(parsedData?.timeOfIncident),
         people_description:
           formData.inputMode === "text"
+            ? "" // Simple text mode has no people details
+            : formData.inputMode === "manual"
             ? [
                 formData.peopleDetails,
                 formData.peopleAppearance,
@@ -352,27 +375,37 @@ export const ReportModal = ({
                 .join(" | "),
         people_names:
           formData.inputMode === "text"
+            ? ""
+            : formData.inputMode === "manual"
             ? formData.peopleDetails
             : parsedData?.peopleInvolved || "",
         people_appearance:
           formData.inputMode === "text"
+            ? ""
+            : formData.inputMode === "manual"
             ? formData.peopleAppearance
             : parsedData?.appearance || "",
         people_contact_info:
           formData.inputMode === "text"
+            ? ""
+            : formData.inputMode === "manual"
             ? formData.contactDetails
             : parsedData?.contactInfo || "",
         has_vehicle:
           formData.inputMode === "text"
+            ? false
+            : formData.inputMode === "manual"
             ? formData.hasVehicle
             : parsedData?.hasVehicle || false,
         has_weapon:
           formData.inputMode === "text"
+            ? false
+            : formData.inputMode === "manual"
             ? formData.hasWeapon
             : parsedData?.hasWeapon || false,
         crime_type: "theft",
         is_anonymous: true,
-        shared_with_crimestoppers: false,
+        shared_with_crimestoppers: formData.submitToCrimeStoppers,
         status: "submitted",
         user_id: placeholder_user_id,
       };
@@ -463,6 +496,7 @@ export const ReportModal = ({
         hasWeapon: false,
         selectedPlace: undefined,
         inputMode: "text",
+        submitToCrimeStoppers: true,
       });
       setSelectedImages([]);
       setAudioBlob(null);
@@ -501,7 +535,8 @@ export const ReportModal = ({
         category: "amenity",
         importance: 0.8,
       },
-      inputMode: "text",
+      inputMode: "manual",
+      submitToCrimeStoppers: true,
     });
   };
 

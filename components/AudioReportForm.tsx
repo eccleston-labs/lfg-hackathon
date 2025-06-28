@@ -21,6 +21,8 @@ interface AudioReportFormProps {
   isTranscribing: boolean;
   parsedData: ParsedFields | null;
   isParsing: boolean;
+  formData: ReportFormData;
+  onInputChange: (field: string, value: string | boolean) => void;
 }
 
 export default function AudioReportForm({
@@ -31,6 +33,8 @@ export default function AudioReportForm({
   isTranscribing,
   parsedData,
   isParsing,
+  formData,
+  onInputChange,
 }: AudioReportFormProps) {
   const isProcessing = isTranscribing || isParsing;
 
@@ -206,23 +210,33 @@ export default function AudioReportForm({
         </div>
       )}
 
-      {/* Instructions */}
-      {!audioBlob && !isProcessing && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <h4 className="font-medium text-gray-900 mb-2">How it works:</h4>
-          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
-            <li>
-              Click &quot;Start Recording&quot; and describe what happened
-            </li>
-            <li>
-              Include details like location, time, people involved, and what
-              occurred
-            </li>
-            <li>Your audio will be automatically transcribed and analyzed</li>
-            <li>Review the extracted information and submit your report</li>
-          </ol>
-        </div>
-      )}
+      {/* CrimeStoppers Checkbox */}
+      <div className="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          id="submitToCrimeStoppers"
+          checked={formData.submitToCrimeStoppers}
+          onChange={(e) =>
+            onInputChange("submitToCrimeStoppers", e.target.checked)
+          }
+          className="w-5 h-5 mt-0.5"
+        />
+        <label
+          htmlFor="submitToCrimeStoppers"
+          className="text-sm font-semibold text-gray-700 cursor-pointer"
+        >
+          Submit report to{" "}
+          <a
+            href="https://crimestoppers-uk.org/give-information/forms/pre-form"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Crimestoppers UK
+          </a>
+        </label>
+      </div>
 
       {/* Submit Button */}
       <button

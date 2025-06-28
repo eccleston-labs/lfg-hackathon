@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Do not run the dev server (npm run dev) or build (npm run dev).
