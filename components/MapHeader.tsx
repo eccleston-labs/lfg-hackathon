@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-interface MapHeaderProps {
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (open: boolean) => void;
-}
-
-export const MapHeader = ({ isSidebarOpen, setIsSidebarOpen }: MapHeaderProps) => {
+export const MapHeader = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -16,13 +11,7 @@ export const MapHeader = ({ isSidebarOpen, setIsSidebarOpen }: MapHeaderProps) =
       </Link>
       
       {/* Desktop Navigation */}
-      <div className="hidden lg:flex gap-6 items-center">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded border"
-        >
-          {isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-        </button>
+      <div className="hidden lg:flex gap-6">
         <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
           Map
         </span>
@@ -34,14 +23,8 @@ export const MapHeader = ({ isSidebarOpen, setIsSidebarOpen }: MapHeaderProps) =
         </Link>
       </div>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden flex items-center gap-2">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border"
-        >
-          {isSidebarOpen ? "Hide" : "Show"}
-        </button>
+      {/* Mobile Hamburger Menu */}
+      <div className="lg:hidden">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 text-gray-700 hover:text-gray-900"
