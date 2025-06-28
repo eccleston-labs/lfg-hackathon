@@ -20,35 +20,13 @@ export const NearbyReportsSidebar = ({
 }: NearbyReportsSidebarProps) => {
   return (
     <aside
-      className={`
-        w-80 bg-white border-r border-gray-300 flex flex-col transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0 lg:static absolute inset-y-0 left-0 z-40
-      `}
+      className="w-80 bg-white border-r border-gray-300 flex flex-col"
     >
       {/* Nearby Reports Section */}
       <div className="p-6 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Nearby reports</h2>
-          {/* Close button for mobile */}
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-1 hover:bg-gray-100 rounded"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+
         </div>
         <div className="space-y-3">
           {nearbyReports.length > 0 ? (
