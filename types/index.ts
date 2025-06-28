@@ -42,4 +42,5 @@ export interface ReportFormData {
   hasVehicle: boolean;
   hasWeapon: boolean;
   selectedPlace?: OSMPlace;
+  inputMode: "text" | "audio";
 }

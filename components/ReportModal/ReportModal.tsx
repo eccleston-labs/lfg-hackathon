@@ -15,6 +15,11 @@ export const ReportModal = ({
   onReportSubmitted,
 }: ReportModalProps) => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [parsedData, setParsedData] = useState<any | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<ReportFormData>({
     postcode: "",
@@ -27,6 +32,7 @@ export const ReportModal = ({
     hasVehicle: false,
     hasWeapon: false,
     selectedPlace: undefined,
+    inputMode: "text",
   });
 
   const supabase = createClient();
@@ -36,6 +42,17 @@ export const ReportModal = ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleAudioRecorded = async (blob: Blob | null) => {
+    setAudioBlob(blob);
+    setTranscript(null);
+    setParsedData(null);
+
+    // Auto-transcribe and structure when audio is recorded
+    if (blob) {
+      await handleAutoTranscribeAndStructure(blob);
+    }
   };
 
   const handlePlaceSelect = (place: OSMPlace | undefined) => {
@@ -113,34 +130,217 @@ export const ReportModal = ({
     return uploadedUrls;
   };
 
+  const handleTranscribe = async () => {
+    if (!audioBlob) {
+      alert("Please record audio first");
+      return;
+    }
+
+    setIsTranscribing(true);
+    try {
+      // Create FormData to send the audio file directly
+      const formData = new FormData();
+      const audioFile = new File([audioBlob], "audio.webm", {
+        type: audioBlob.type || "audio/webm",
+      });
+      formData.append("audio", audioFile);
+
+      const response = await fetch("/api/transcribe-audio", {
+        method: "POST",
+        body: formData, // Send FormData instead of JSON
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setTranscript(result.transcript);
+        console.log("Transcription successful:", result);
+      } else {
+        console.error("Transcription failed:", result);
+        alert(`Transcription failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Transcription error:", error);
+      alert("Failed to transcribe audio. Please try again.");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleParseTranscript = async () => {
+    if (!transcript) {
+      alert("Please transcribe audio first");
+      return;
+    }
+
+    setIsParsing(true);
+    try {
+      const response = await fetch("/api/parse-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setParsedData(result.extractedFields);
+        console.log("Parsing successful:", result);
+      } else {
+        console.error("Parsing failed:", result);
+        alert(`Parsing failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Parsing error:", error);
+      alert("Failed to structure data. Please try again.");
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleAutoTranscribeAndStructure = async (blob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      // Step 1: Transcribe audio
+      const formData = new FormData();
+      const audioFile = new File([blob], "audio.webm", {
+        type: blob.type || "audio/webm",
+      });
+      formData.append("audio", audioFile);
+
+      const transcribeResponse = await fetch("/api/transcribe-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      const transcribeResult = await transcribeResponse.json();
+
+      if (!transcribeResult.success) {
+        console.error("Transcription failed:", transcribeResult);
+        alert(`Transcription failed: ${transcribeResult.error}`);
+        return;
+      }
+
+      const transcriptText = transcribeResult.transcript;
+      setTranscript(transcriptText);
+      console.log("Transcription successful:", transcriptText);
+
+      // Step 2: Structure the transcript
+      setIsTranscribing(false);
+      setIsParsing(true);
+
+      const parseResponse = await fetch("/api/parse-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript: transcriptText }),
+      });
+
+      const parseResult = await parseResponse.json();
+
+      if (parseResult.success) {
+        setParsedData(parseResult.extractedFields);
+        console.log("Parsing successful:", parseResult);
+      } else {
+        console.error("Parsing failed:", parseResult);
+        alert(`Data structuring failed: ${parseResult.error}`);
+      }
+    } catch (error) {
+      console.error("Auto-processing error:", error);
+      alert("Failed to process audio. Please try again.");
+    } finally {
+      setIsTranscribing(false);
+      setIsParsing(false);
+    }
+  };
+
   const handleSubmitReport = async (e: FormEvent) => {
     e.preventDefault();
 
     try {
       setIsUploading(true);
 
-      // Upload images first
+      // Validate input based on mode
+      if (formData.inputMode === "text") {
+        if (!formData.whatHappened.trim()) {
+          alert("Please describe what happened");
+          return;
+        }
+      } else {
+        if (!parsedData) {
+          alert("Please record and process your audio report first");
+          return;
+        }
+      }
+
+      // Upload files
       const imageUrls = await uploadImages();
 
       // Placeholder user ID (should be replaced with actual auth)
       const placeholder_user_id = "d8c36489-f008-4022-9b51-df6469dc81eb";
 
-      // Prepare report data
+      // Prepare report data based on input mode
       const reportData = {
-        raw_text: formData.whatHappened,
-        postcode: formData.postcode,
+        raw_text:
+          formData.inputMode === "text"
+            ? formData.whatHappened
+            : parsedData?.description || "Audio report processed",
+        postcode: formData.inputMode === "text" ? formData.postcode : "", // Audio mode doesn't collect postcode separately
         location_hint:
-          formData.addressDetails +
-          (formData.selectedPlace
-            ? ` | Selected place: ${formData.selectedPlace.display_name}`
-            : ""),
-        time_description: formData.whenHappened,
-        time_known: Boolean(formData.whenHappened.trim()),
-        people_names: formData.peopleDetails,
-        people_appearance: formData.peopleAppearance,
-        people_contact_info: formData.contactDetails,
-        has_vehicle: formData.hasVehicle,
-        has_weapon: formData.hasWeapon,
+          formData.inputMode === "text"
+            ? formData.addressDetails +
+              (formData.selectedPlace
+                ? ` | Selected place: ${formData.selectedPlace.display_name}`
+                : "")
+            : parsedData?.location || "",
+        incident_date: null, // We could parse this from time_description in the future
+        time_description:
+          formData.inputMode === "text"
+            ? formData.whenHappened
+            : parsedData?.timeOfIncident || "",
+        time_known:
+          formData.inputMode === "text"
+            ? Boolean(formData.whenHappened.trim())
+            : Boolean(parsedData?.timeOfIncident),
+        people_description:
+          formData.inputMode === "text"
+            ? [
+                formData.peopleDetails,
+                formData.peopleAppearance,
+                formData.contactDetails,
+              ]
+                .filter(Boolean)
+                .join(" | ")
+            : [
+                parsedData?.peopleInvolved,
+                parsedData?.appearance,
+                parsedData?.contactInfo,
+              ]
+                .filter(Boolean)
+                .join(" | "),
+        people_names:
+          formData.inputMode === "text"
+            ? formData.peopleDetails
+            : parsedData?.peopleInvolved || "",
+        people_appearance:
+          formData.inputMode === "text"
+            ? formData.peopleAppearance
+            : parsedData?.appearance || "",
+        people_contact_info:
+          formData.inputMode === "text"
+            ? formData.contactDetails
+            : parsedData?.contactInfo || "",
+        has_vehicle:
+          formData.inputMode === "text"
+            ? formData.hasVehicle
+            : parsedData?.hasVehicle || false,
+        has_weapon:
+          formData.inputMode === "text"
+            ? formData.hasWeapon
+            : parsedData?.hasWeapon || false,
         crime_type: "theft",
         is_anonymous: true,
         shared_with_crimestoppers: false,
@@ -199,8 +399,12 @@ export const ReportModal = ({
         hasVehicle: false,
         hasWeapon: false,
         selectedPlace: undefined,
+        inputMode: "text",
       });
       setSelectedImages([]);
+      setAudioBlob(null);
+      setTranscript(null);
+      setParsedData(null);
 
       // Reload reports to show the new one
       onReportSubmitted();
@@ -234,6 +438,7 @@ export const ReportModal = ({
         category: "amenity",
         importance: 0.8,
       },
+      inputMode: "text",
     });
   };
 
@@ -262,6 +467,11 @@ export const ReportModal = ({
           selectedImages={selectedImages}
           onImageSelect={handleImageSelect}
           onRemoveImage={removeImage}
+          audioBlob={audioBlob}
+          onAudioRecorded={handleAudioRecorded}
+          isTranscribing={isTranscribing}
+          parsedData={parsedData}
+          isParsing={isParsing}
           isUploading={isUploading}
           onFillTestData={fillTestData}
         />
