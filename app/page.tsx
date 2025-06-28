@@ -263,7 +263,7 @@ export default function Home() {
       <footer className="py-3 sm:py-4 px-4 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto">
           <p className="text-center text-xs sm:text-sm text-gray-500">
-            © 2024 OpenCrimeReports. Helping communities stay safe.
+            © 2025 OpenCrimeReports. Helping communities stay safe.
           </p>
         </div>
       </footer>
