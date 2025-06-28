@@ -19,14 +19,11 @@ export const NearbyReportsSidebar = ({
   mapBounds,
 }: NearbyReportsSidebarProps) => {
   return (
-    <aside
-      className="w-80 bg-white border-r border-gray-300 flex flex-col"
-    >
+    <aside className="w-80 bg-white border-r border-gray-300 flex flex-col">
       {/* Nearby Reports Section */}
       <div className="p-6 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Nearby reports</h2>
-
         </div>
         <div className="space-y-3">
           {nearbyReports.length > 0 ? (
@@ -63,13 +60,7 @@ export const NearbyReportsSidebar = ({
           </div>
         ) : (
           <div className="text-sm space-y-1">
-            <div className="font-medium">
-              <span className="text-blue-600">
-                {reports.filter((r) => r.coordinates).length}
-              </span>{" "}
-              reports on map
-            </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 pt-3">
               {reports.length} total reports loaded
             </div>
             {reports.length > reports.filter((r) => r.coordinates).length && (
