@@ -2,6 +2,7 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ReportFormData, OSMPlace } from "@/types";
 import { ReportForm } from "./ReportForm";
+import { useEffect, useRef } from "react";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const ReportModal = ({
 }: ReportModalProps) => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);  
   const [formData, setFormData] = useState<ReportFormData>({
     postcode: "",
     addressDetails: "",
@@ -28,7 +30,6 @@ export const ReportModal = ({
     hasWeapon: false,
     selectedPlace: undefined,
   });
-
   const supabase = createClient();
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -150,6 +151,15 @@ export const ReportModal = ({
     e.preventDefault();
 
     try {
+      // Validate postcode
+      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
+      if (!loc_gps) {
+        setPostcodeError("Invalid postcode. Please enter a valid UK postcode.");
+        setIsUploading(false);
+        return;
+      }
+      setPostcodeError(null); // Clear error if valid
+
       setIsUploading(true);
 
       // Upload images first
@@ -157,8 +167,6 @@ export const ReportModal = ({
 
       // Placeholder user ID (should be replaced with actual auth)
       const placeholder_user_id = "d8c36489-f008-4022-9b51-df6469dc81eb";
-
-      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
 
       // Prepare report data
       const reportData = {
@@ -300,6 +308,7 @@ export const ReportModal = ({
           onRemoveImage={removeImage}
           isUploading={isUploading}
           onFillTestData={fillTestData}
+          postcodeError={postcodeError}
         />
       </div>
     </div>
