@@ -133,7 +133,7 @@ export default function Home() {
           {/* Header Section */}
           <div className="space-y-3 sm:space-y-4 lg:space-y-6">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 tracking-tight leading-tight px-2">
-              ProtectOurStreets
+              OpenCrimeReports
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-700 leading-relaxed max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-2">
               Report crimes and anti-social behaviour in your area; view a
@@ -225,7 +225,7 @@ export default function Home() {
       <footer className="py-4 px-4 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto">
           <p className="text-center text-xs sm:text-sm text-gray-500">
-            © 2024 ProtectOurStreets. Helping communities stay safe.
+            © 2024 OpenCrimeReports. Helping communities stay safe.
           </p>
         </div>
       </footer>
