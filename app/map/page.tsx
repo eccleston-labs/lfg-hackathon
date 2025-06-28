@@ -37,7 +37,21 @@ interface Report {
   people_appearance?: string;
   has_vehicle: boolean;
   has_weapon: boolean;
+  coordinates?: [number, number];
 }
+
+// Simple marker that definitely works
+const createSimpleMarker = () => {
+  if (typeof window === "undefined") return null;
+
+  const L = require("leaflet");
+  return L.divIcon({
+    html: '<div style="background-color: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+    className: "",
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
 
 export default function MapPage() {
   const supabase = createClient();
@@ -55,6 +69,51 @@ export default function MapPage() {
     hasVehicle: false,
     hasWeapon: false,
   });
+
+  // Postcode geocoding using postcodes.io API
+  const postcodeCache = new Map<string, [number, number]>();
+
+  const postcodeToCoords = async (
+    postcode: string
+  ): Promise<[number, number] | null> => {
+    if (!postcode) return null;
+
+    const normalized = postcode.toUpperCase().trim();
+
+    // Check cache first
+    if (postcodeCache.has(normalized)) {
+      return postcodeCache.get(normalized)!;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
+
+      if (!response.ok) {
+        console.warn(`Postcode API error for ${normalized}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.status === 200 && data.result) {
+        const coords: [number, number] = [
+          data.result.latitude,
+          data.result.longitude,
+        ];
+        // Cache the result
+        postcodeCache.set(normalized, coords);
+        return coords;
+      } else {
+        console.warn(`Invalid postcode: ${normalized}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error geocoding postcode ${normalized}:`, error);
+      return null;
+    }
+  };
 
   // Load reports on component mount
   useEffect(() => {
@@ -74,42 +133,33 @@ export default function MapPage() {
         return;
       }
 
-      console.log("Loaded reports:", data);
-      setReports(data || []);
+      console.log("Loaded reports from DB:", data);
+
+      // Geocode postcodes for all reports
+      const reportsWithCoords = await Promise.all(
+        (data || []).map(async (report) => {
+          console.log(`Geocoding postcode: ${report.postcode}`);
+          const coords = await postcodeToCoords(report.postcode);
+          console.log(`Geocoded ${report.postcode} to:`, coords);
+          return {
+            ...report,
+            coordinates: coords,
+          };
+        })
+      );
+
+      console.log("Reports with coordinates:", reportsWithCoords);
+      console.log(
+        "Reports that will render (have coordinates):",
+        reportsWithCoords.filter((r) => r.coordinates)
+      );
+
+      setReports(reportsWithCoords);
     } catch (error) {
       console.error("Unexpected error loading reports:", error);
     } finally {
       setIsLoadingReports(false);
     }
-  };
-
-  // Simple postcode to coordinates conversion (UK-focused)
-  // In production, you'd want to use a proper geocoding service
-  const postcodeToCoords = (postcode: string): [number, number] | null => {
-    // This is a very basic mapping - in production use a geocoding API
-    const postcodeMap: { [key: string]: [number, number] } = {
-      "S10 5GG": [53.3781, -1.4816], // Sheffield
-      "SW1A 1AA": [51.5014, -0.1419], // London
-      "M1 1AA": [53.4808, -2.2426], // Manchester
-      "B1 1AA": [52.4862, -1.8904], // Birmingham
-    };
-
-    const normalized = postcode.toUpperCase().trim();
-
-    // Check for exact match first
-    if (postcodeMap[normalized]) {
-      return postcodeMap[normalized];
-    }
-
-    // Extract postcode area (first part) for approximate location
-    const postcodeArea = normalized.split(" ")[0];
-    if (postcodeArea.startsWith("S1")) return [53.3781, -1.4816]; // Sheffield area
-    if (postcodeArea.startsWith("SW")) return [51.5014, -0.1419]; // London SW
-    if (postcodeArea.startsWith("M1")) return [53.4808, -2.2426]; // Manchester
-    if (postcodeArea.startsWith("B1")) return [52.4862, -1.8904]; // Birmingham
-
-    // Default to London if no match
-    return [51.505, -0.09];
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -228,11 +278,13 @@ export default function MapPage() {
 
         {/* Report Markers */}
         {reports.map((report) => {
-          const coords = postcodeToCoords(report.postcode);
+          const coords = report.coordinates;
           if (!coords) return null;
 
+          const simpleIcon = createSimpleMarker();
+
           return (
-            <Marker key={report.id} position={coords}>
+            <Marker key={report.id} position={coords} icon={simpleIcon}>
               <Popup>
                 <div className="p-2 max-w-xs">
                   <div className="font-bold text-lg mb-2 capitalize">
@@ -302,9 +354,22 @@ export default function MapPage() {
             <span className="text-sm font-medium">Loading reports...</span>
           </div>
         ) : (
-          <div className="text-sm font-medium">
-            <span className="text-blue-600">{reports.length}</span> reports on
-            map
+          <div className="text-sm space-y-1">
+            <div className="font-medium">
+              <span className="text-blue-600">
+                {reports.filter((r) => r.coordinates).length}
+              </span>{" "}
+              reports on map
+            </div>
+            <div className="text-xs text-gray-500">
+              {reports.length} total reports loaded
+            </div>
+            {reports.length > reports.filter((r) => r.coordinates).length && (
+              <div className="text-xs text-orange-600">
+                {reports.length - reports.filter((r) => r.coordinates).length}{" "}
+                reports couldn't be geocoded
+              </div>
+            )}
           </div>
         )}
       </div>
