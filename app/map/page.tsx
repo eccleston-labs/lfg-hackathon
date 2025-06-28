@@ -88,6 +88,7 @@ function MapPageContent() {
   const [nearbyReports, setNearbyReports] = useState<Report[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
   const [formData, setFormData] = useState({
     postcode: "",
     addressDetails: "",
@@ -214,6 +215,18 @@ function MapPageContent() {
       });
     }
   }, [reports, mapBounds]);
+
+  // Handle escape key to close sidebar on mobile
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isSidebarOpen]);
 
   const loadReports = async () => {
     try {
@@ -473,14 +486,41 @@ function MapPageContent() {
       </header>
 
       {/* Main content area */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex relative">
         {/* Left Sidebar */}
-        <aside className="w-80 bg-white border-r border-gray-300 flex flex-col">
+        <aside
+          className={`
+          w-80 bg-white border-r border-gray-300 flex flex-col transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 lg:relative absolute inset-y-0 left-0 z-40
+        `}
+        >
           {/* Nearby Reports Section */}
           <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Nearby reports
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Nearby reports
+              </h2>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden p-1 hover:bg-gray-100 rounded"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
             <div className="space-y-3">
               {nearbyReports.length > 0 ? (
                 nearbyReports.map((report) => (
@@ -668,16 +708,44 @@ function MapPageContent() {
               );
             })}
           </MapContainer>
-
-          {/* Report Button */}
-          <button
-            className="absolute bottom-6 right-6 bg-white text-black font-bold text-lg px-6 py-3 rounded-lg border-2 border-black hover:bg-gray-100 transition-colors shadow-lg z-[1000]"
-            onClick={() => setIsReportModalOpen(true)}
-          >
-            Report
-          </button>
         </div>
+
+        {/* Mobile Sidebar Backdrop */}
+        {isSidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
       </div>
+
+      {/* Sidebar Toggle Button - Mobile Only - moved outside map container to avoid Leaflet stacking context issues */}
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="lg:hidden fixed top-20 left-4 bg-white text-black p-3 rounded-lg border-2 border-black hover:bg-gray-100 transition-colors shadow-lg z-[1000]"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+
+      {/* Report Button - moved outside map container to avoid Leaflet stacking context issues */}
+      <button
+        className="fixed bottom-6 right-6 bg-white text-black font-bold text-lg px-6 py-3 rounded-lg border-2 border-black hover:bg-gray-100 transition-colors shadow-lg z-[1000]"
+        onClick={() => setIsReportModalOpen(true)}
+      >
+        Report
+      </button>
 
       {/* Report Modal */}
       {isReportModalOpen && (
