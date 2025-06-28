@@ -151,7 +151,7 @@ export default function Home() {
                   value={postcodeInput}
                   onChange={(e) => setPostcodeInput(e.target.value)}
                   onKeyPress={handlePostcodeKeyPress}
-                  placeholder="Enter a UK postcode, street, or address"
+                  placeholder="Enter a UK postcode"
                   className="flex-1 px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors w-full"
                 />
                 <button
