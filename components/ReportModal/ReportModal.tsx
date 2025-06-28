@@ -1,7 +1,8 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ReportFormData, OSMPlace } from "@/types";
-import { ReportForm } from "./ReportForm";
+import ReportForm from "./ReportForm";
+import { useEffect, useRef } from "react";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const ReportModal = ({
   const [parsedData, setParsedData] = useState<any | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ReportFormData>({
     postcode: "",
     addressDetails: "",
@@ -34,7 +36,6 @@ export const ReportModal = ({
     selectedPlace: undefined,
     inputMode: "text",
   });
-
   const supabase = createClient();
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -130,130 +131,38 @@ export const ReportModal = ({
     return uploadedUrls;
   };
 
-  const handleTranscribe = async () => {
-    if (!audioBlob) {
-      alert("Please record audio first");
-      return;
-    }
+  // Postcode geocoding using postcodes.io API (same as map page)
+  const postcodeToCoordsPoint = async (
+    postcode: string
+  ): Promise<string | null> => {
+    if (!postcode) return null;
 
-    setIsTranscribing(true);
+    const normalized = postcode.toUpperCase().trim();
+
     try {
-      // Create FormData to send the audio file directly
-      const formData = new FormData();
-      const audioFile = new File([audioBlob], "audio.webm", {
-        type: audioBlob.type || "audio/webm",
-      });
-      formData.append("audio", audioFile);
+      console.log(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
+      const response = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
 
-      const response = await fetch("/api/transcribe-audio", {
-        method: "POST",
-        body: formData, // Send FormData instead of JSON
-      });
+      if (!response.ok) {
+        console.warn(`Postcode API error for ${normalized}:`, response.status);
+        return null;
+      }
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (result.success) {
-        setTranscript(result.transcript);
-        console.log("Transcription successful:", result);
+      if (data.status === 200 && data.result) {
+        return `POINT(${data.result.latitude} ${data.result.longitude})`;
       } else {
-        console.error("Transcription failed:", result);
-        alert(`Transcription failed: ${result.error}`);
+        console.warn(`Invalid postcode: ${normalized}`);
+        return null;
       }
     } catch (error) {
-      console.error("Transcription error:", error);
-      alert("Failed to transcribe audio. Please try again.");
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
-  const handleParseTranscript = async () => {
-    if (!transcript) {
-      alert("Please transcribe audio first");
-      return;
-    }
-
-    setIsParsing(true);
-    try {
-      const response = await fetch("/api/parse-transcript", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ transcript }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setParsedData(result.extractedFields);
-        console.log("Parsing successful:", result);
-      } else {
-        console.error("Parsing failed:", result);
-        alert(`Parsing failed: ${result.error}`);
-      }
-    } catch (error) {
-      console.error("Parsing error:", error);
-      alert("Failed to structure data. Please try again.");
-    } finally {
-      setIsParsing(false);
-    }
-  };
-
-  const handleAutoTranscribeAndStructure = async (blob: Blob) => {
-    setIsTranscribing(true);
-    try {
-      // Step 1: Transcribe audio
-      const formData = new FormData();
-      const audioFile = new File([blob], "audio.webm", {
-        type: blob.type || "audio/webm",
-      });
-      formData.append("audio", audioFile);
-
-      const transcribeResponse = await fetch("/api/transcribe-audio", {
-        method: "POST",
-        body: formData,
-      });
-
-      const transcribeResult = await transcribeResponse.json();
-
-      if (!transcribeResult.success) {
-        console.error("Transcription failed:", transcribeResult);
-        alert(`Transcription failed: ${transcribeResult.error}`);
-        return;
-      }
-
-      const transcriptText = transcribeResult.transcript;
-      setTranscript(transcriptText);
-      console.log("Transcription successful:", transcriptText);
-
-      // Step 2: Structure the transcript
-      setIsTranscribing(false);
-      setIsParsing(true);
-
-      const parseResponse = await fetch("/api/parse-transcript", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ transcript: transcriptText }),
-      });
-
-      const parseResult = await parseResponse.json();
-
-      if (parseResult.success) {
-        setParsedData(parseResult.extractedFields);
-        console.log("Parsing successful:", parseResult);
-      } else {
-        console.error("Parsing failed:", parseResult);
-        alert(`Data structuring failed: ${parseResult.error}`);
-      }
-    } catch (error) {
-      console.error("Auto-processing error:", error);
-      alert("Failed to process audio. Please try again.");
-    } finally {
-      setIsTranscribing(false);
-      setIsParsing(false);
+      console.error(`Error geocoding postcode ${normalized}:`, error);
+      return null;
     }
   };
 
@@ -261,6 +170,15 @@ export const ReportModal = ({
     e.preventDefault();
 
     try {
+      // Validate postcode
+      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
+      if (!loc_gps) {
+        setPostcodeError("Invalid postcode. Please enter a valid UK postcode.");
+        setIsUploading(false);
+        return;
+      }
+      setPostcodeError(null); // Clear error if valid
+
       setIsUploading(true);
 
       // Validate input based on mode
@@ -284,11 +202,9 @@ export const ReportModal = ({
 
       // Prepare report data based on input mode
       const reportData = {
-        raw_text:
-          formData.inputMode === "text"
-            ? formData.whatHappened
-            : parsedData?.description || "Audio report processed",
-        postcode: formData.inputMode === "text" ? formData.postcode : "", // Audio mode doesn't collect postcode separately
+        raw_text: formData.whatHappened,
+        postcode: formData.postcode,
+        location: loc_gps,
         location_hint:
           formData.inputMode === "text"
             ? formData.addressDetails +
@@ -474,6 +390,7 @@ export const ReportModal = ({
           isParsing={isParsing}
           isUploading={isUploading}
           onFillTestData={fillTestData}
+          postcodeError={postcodeError}
         />
       </div>
     </div>

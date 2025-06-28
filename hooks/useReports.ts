@@ -2,7 +2,20 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Report } from "@/types";
 import { useGeocoding } from "./useGeocoding";
+import wkx from "wkx";
 
+function parseWKB(locationBuffer: string) {
+  if (!locationBuffer)
+    return null;
+  const buffer = Buffer.from(locationBuffer, 'hex');
+  const geom = wkx.Geometry.parse(buffer);
+  
+if (geom instanceof wkx.Point) {
+    return [geom.x, geom.y]; // [lon, lat]
+  } else {
+    throw new Error(`Expected Point geometry, got ${geom?.constructor?.name}`);
+  }
+}
 export const useReports = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
@@ -51,18 +64,15 @@ export const useReports = () => {
 
       console.log("Loaded reports from DB:", reportsWithPhotos);
 
-      // Geocode postcodes for all reports
-      const reportsWithCoords = await Promise.all(
-        reportsWithPhotos.map(async (report) => {
-          console.log(`Geocoding postcode: ${report.postcode}`);
-          const coords = await postcodeToCoords(report.postcode);
-          console.log(`Geocoded ${report.postcode} to:`, coords);
+      // Duplicate location field into coordinates
+      const reportsWithCoords = reportsWithPhotos.map((report) => {
+          console.log(report.location)
           return {
             ...report,
-            coordinates: coords,
+            coordinates: parseWKB(report.location),
           };
-        })
-      );
+        });
+      
 
       console.log("Reports with coordinates:", reportsWithCoords);
       console.log(
