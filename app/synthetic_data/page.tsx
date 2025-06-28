@@ -87,6 +87,14 @@ export default function SyntheticDataPage() {
       return rtn;
   }
 
+  function generateSyntheticLocation(i: number) {
+    // 51.5072° N, 0.1276° W
+    const n = 51.5072 + (Math.random()*0.1) - 0.05;
+    const w = 0.1276 + (Math.random()*0.1) - 0.05;
+
+    return `POINT(${n} ${w})`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -110,7 +118,7 @@ export default function SyntheticDataPage() {
       is_anonymous: true, // Never show synthetic user information
       shared_with_crimestoppers: false, // Synthetic data should not be reported
       status: "submitted",
-      location: null, //
+      location: generateSyntheticLocation(i), //
       //location: {
       //  type: "Point",
       //  coordinates: [Math.random() * 360 - 180, Math.random() * 180 - 90], // Random coordinates
