@@ -16,6 +16,11 @@ const TileLayer = dynamic(
   { ssr: false }
 );
 
+const ZoomControl = dynamic(
+  () => import("react-leaflet").then((mod) => mod.ZoomControl),
+  { ssr: false }
+);
+
 interface InteractiveMapProps {
   reports: Report[];
 }
@@ -62,12 +67,14 @@ export const InteractiveMap = ({ reports }: InteractiveMapProps) => {
         center={getMapCenter()}
         zoom={13}
         className="h-full w-full"
-        zoomControl={true}
+        zoomControl={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <ZoomControl position="topright" />
 
         {/* Report Markers */}
         {reports.map((report) => (
