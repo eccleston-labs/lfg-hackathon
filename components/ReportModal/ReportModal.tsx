@@ -45,6 +45,70 @@ export const ReportModal = ({
     }));
   };
 
+  const handleAutoTranscribeAndStructure = async (blob: Blob) => {
+    try {
+      setIsTranscribing(true);
+
+      // Step 1: Transcribe audio
+      const formData = new FormData();
+      formData.append("audio", blob, "recording.webm");
+
+      const transcribeResponse = await fetch("/api/transcribe-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!transcribeResponse.ok) {
+        throw new Error(`Transcription failed: ${transcribeResponse.status}`);
+      }
+
+      const transcribeResult = await transcribeResponse.json();
+
+      if (!transcribeResult.success) {
+        throw new Error(transcribeResult.error || "Transcription failed");
+      }
+
+      const transcript = transcribeResult.transcript;
+      setTranscript(transcript);
+      setIsTranscribing(false);
+
+      // Step 2: Parse transcript into structured data
+      setIsParsing(true);
+
+      const parseResponse = await fetch("/api/parse-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript }),
+      });
+
+      if (!parseResponse.ok) {
+        throw new Error(`Parsing failed: ${parseResponse.status}`);
+      }
+
+      const parseResult = await parseResponse.json();
+
+      if (!parseResult.success) {
+        throw new Error(parseResult.error || "Parsing failed");
+      }
+
+      setParsedData(parseResult.extractedFields);
+      setIsParsing(false);
+    } catch (error) {
+      console.error("Auto-transcribe and structure error:", error);
+      setIsTranscribing(false);
+      setIsParsing(false);
+
+      // Show user-friendly error
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to process audio. Please try again."
+      );
+    }
+  };
+
   const handleAudioRecorded = async (blob: Blob | null) => {
     setAudioBlob(blob);
     setTranscript(null);
@@ -170,27 +234,67 @@ export const ReportModal = ({
     e.preventDefault();
 
     try {
-      // Validate postcode
-      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
-      if (!loc_gps) {
-        setPostcodeError("Invalid postcode. Please enter a valid UK postcode.");
-        setIsUploading(false);
-        return;
-      }
-      setPostcodeError(null); // Clear error if valid
-
       setIsUploading(true);
 
       // Validate input based on mode
       if (formData.inputMode === "text") {
         if (!formData.whatHappened.trim()) {
           alert("Please describe what happened");
+          setIsUploading(false);
           return;
         }
+
+        // Validate postcode for text mode
+        const loc_gps = await postcodeToCoordsPoint(formData.postcode);
+        if (!loc_gps) {
+          setPostcodeError(
+            "Invalid postcode. Please enter a valid UK postcode."
+          );
+          setIsUploading(false);
+          return;
+        }
+        setPostcodeError(null); // Clear error if valid
       } else {
+        // Audio mode validation
         if (!parsedData) {
           alert("Please record and process your audio report first");
+          setIsUploading(false);
           return;
+        }
+
+        if (!parsedData.location && !parsedData.description) {
+          alert(
+            "Could not extract location information from your audio. Please try recording again with more location details."
+          );
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // Get location coordinates
+      let loc_gps: string | null = null;
+
+      if (formData.inputMode === "text") {
+        loc_gps = await postcodeToCoordsPoint(formData.postcode);
+      } else {
+        // For audio mode, try to extract postcode from location or use a default
+        if (parsedData?.location) {
+          // Try to extract a postcode from the location string
+          const postcodeMatch = parsedData.location.match(
+            /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i
+          );
+          if (postcodeMatch) {
+            loc_gps = await postcodeToCoordsPoint(postcodeMatch[0]);
+          }
+
+          // If no postcode found or geocoding failed, use a default Sheffield location
+          if (!loc_gps) {
+            console.log("Using default Sheffield location for audio report");
+            loc_gps = "POINT(53.3811 -1.4701)"; // Sheffield city center
+          }
+        } else {
+          // Fallback to Sheffield if no location provided
+          loc_gps = "POINT(53.3811 -1.4701)";
         }
       }
 
@@ -202,8 +306,17 @@ export const ReportModal = ({
 
       // Prepare report data based on input mode
       const reportData = {
-        raw_text: formData.whatHappened,
-        postcode: formData.postcode,
+        raw_text:
+          formData.inputMode === "text"
+            ? formData.whatHappened
+            : parsedData?.description ||
+              "Audio report - see location_hint for details",
+        postcode:
+          formData.inputMode === "text"
+            ? formData.postcode
+            : parsedData?.location?.match(
+                /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i
+              )?.[0] || "AUDIO",
         location: loc_gps,
         location_hint:
           formData.inputMode === "text"

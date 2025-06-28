@@ -53,7 +53,12 @@ export default function ReportForm({
   onFillTestData,
   postcodeError,
 }: ReportFormProps) {
-  const [inputMode, setInputMode] = useState<"text" | "audio">("text");
+  // Use inputMode from formData instead of local state
+  const inputMode = formData.inputMode;
+
+  const handleInputModeChange = (mode: "text" | "audio") => {
+    onInputChange("inputMode", mode);
+  };
 
   return (
     <div>
@@ -61,7 +66,7 @@ export default function ReportForm({
       <div className="flex gap-4 border-b border-gray-200 p-6 pb-0">
         <button
           type="button"
-          onClick={() => setInputMode("text")}
+          onClick={() => handleInputModeChange("text")}
           className={`pb-2 px-1 border-b-2 font-medium ${
             inputMode === "text"
               ? "border-blue-500 text-blue-600"
@@ -72,7 +77,7 @@ export default function ReportForm({
         </button>
         <button
           type="button"
-          onClick={() => setInputMode("audio")}
+          onClick={() => handleInputModeChange("audio")}
           className={`pb-2 px-1 border-b-2 font-medium ${
             inputMode === "audio"
               ? "border-blue-500 text-blue-600"
@@ -98,7 +103,15 @@ export default function ReportForm({
           postcodeError={postcodeError}
         />
       ) : (
-        <AudioReportForm onSubmit={onSubmit} isUploading={isUploading} />
+        <AudioReportForm
+          onSubmit={onSubmit}
+          isUploading={isUploading}
+          audioBlob={audioBlob}
+          onAudioRecorded={onAudioRecorded}
+          isTranscribing={isTranscribing}
+          parsedData={parsedData}
+          isParsing={isParsing}
+        />
       )}
     </div>
   );
