@@ -113,6 +113,39 @@ export const ReportModal = ({
     return uploadedUrls;
   };
 
+  // Postcode geocoding using postcodes.io API (same as map page)
+  const postcodeToCoordsPoint = async (
+    postcode: string
+  ): Promise<string | null> => {
+    if (!postcode) return null;
+
+    const normalized = postcode.toUpperCase().trim();
+
+    try {
+      console.log(`https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`)
+      const response = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
+
+      if (!response.ok) {
+        console.warn(`Postcode API error for ${normalized}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.status === 200 && data.result) {
+        return `POINT(${data.result.latitude} ${data.result.longitude})`;
+      } else {
+        console.warn(`Invalid postcode: ${normalized}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error geocoding postcode ${normalized}:`, error);
+      return null;
+    }
+  };
+
   const handleSubmitReport = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -125,10 +158,13 @@ export const ReportModal = ({
       // Placeholder user ID (should be replaced with actual auth)
       const placeholder_user_id = "d8c36489-f008-4022-9b51-df6469dc81eb";
 
+      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
+
       // Prepare report data
       const reportData = {
         raw_text: formData.whatHappened,
         postcode: formData.postcode,
+        location: loc_gps,
         location_hint:
           formData.addressDetails +
           (formData.selectedPlace
