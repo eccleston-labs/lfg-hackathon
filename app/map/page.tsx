@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
 
 // Dynamically import MapContainer to avoid SSR issues
 const MapContainer = dynamic(
@@ -454,12 +455,16 @@ export default function MapPage() {
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center z-[1000]">
         <h1 className="text-2xl font-bold text-gray-900">OpenCrimeReports</h1>
         <div className="flex gap-6">
-          <button className="text-gray-700 hover:text-gray-900 font-medium">
-            Map
-          </button>
-          <button className="text-gray-700 hover:text-gray-900 font-medium">
-            Dashboard
-          </button>
+          <Link href="/map">
+            <button className="text-gray-700 hover:text-gray-900 font-medium">
+              Map
+            </button>
+          </Link>
+          <Link href="/dashboard">
+            <button className="text-gray-700 hover:text-gray-900 font-medium">
+              Dashboard
+            </button>
+          </Link>
         </div>
       </header>
 
