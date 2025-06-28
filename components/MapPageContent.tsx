@@ -28,18 +28,23 @@ export const MapPageContent = () => {
 
   return (
     <main className="h-screen flex flex-col">
-      <MapHeader />
+      <MapHeader 
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        <NearbyReportsSidebar
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
-          nearbyReports={nearbyReports}
-          reports={reports}
-          isLoadingReports={isLoadingReports}
-          mapBounds={mapBounds}
-        />
+        {isSidebarOpen && (
+          <NearbyReportsSidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+            nearbyReports={nearbyReports}
+            reports={reports}
+            isLoadingReports={isLoadingReports}
+            mapBounds={mapBounds}
+          />
+        )}
 
         <InteractiveMap reports={reports} />
       </div>
