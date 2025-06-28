@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import MapContainer to avoid SSR issues
@@ -55,6 +56,7 @@ const createSimpleMarker = () => {
 
 export default function MapPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
@@ -113,6 +115,27 @@ export default function MapPage() {
       console.error(`Error geocoding postcode ${normalized}:`, error);
       return null;
     }
+  };
+
+  // Get map center from URL parameters or default to London
+  const getMapCenter = (): [number, number] => {
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    
+    if (lat && lng) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+      
+      // Validate coordinates are reasonable (within world bounds)
+      if (!isNaN(latitude) && !isNaN(longitude) && 
+          latitude >= -90 && latitude <= 90 && 
+          longitude >= -180 && longitude <= 180) {
+        return [latitude, longitude];
+      }
+    }
+    
+    // Default to London coordinates
+    return [51.505, -0.09];
   };
 
   // Load reports on component mount
@@ -266,7 +289,7 @@ export default function MapPage() {
   return (
     <main className="relative h-screen w-full">
       <MapContainer
-        center={[51.505, -0.09]} // London coordinates
+        center={getMapCenter()}
         zoom={13}
         className="h-full w-full"
         zoomControl={true}

@@ -1,7 +1,55 @@
-import { createClient } from "@/utils/supabase/client";
+"use client";
 
-export default async function Home() {
+import { createClient } from "@/utils/supabase/client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function Home() {
   const supabase = createClient();
+  const router = useRouter();
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const handleUseMyLocation = async () => {
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Navigate to map page with coordinates as URL parameters
+        router.push(`/map?lat=${latitude}&lng=${longitude}`);
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location access was denied. Please enable location services and try again.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out. Please try again.");
+            break;
+          default:
+            setLocationError("An unknown error occurred while getting your location.");
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 bg-gray-50">
@@ -29,10 +77,19 @@ export default async function Home() {
 
           <button
             type="button"
-            className="w-full bg-gray-900 text-white text-base sm:text-lg md:text-xl font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-800 active:bg-gray-950 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 touch-manipulation"
+            onClick={handleUseMyLocation}
+            disabled={isGettingLocation}
+            className="w-full bg-gray-900 text-white text-base sm:text-lg md:text-xl font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-800 active:bg-gray-950 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Use my location
+            {isGettingLocation ? "Getting your location..." : "Use my location"}
           </button>
+
+          {/* Error message */}
+          {locationError && (
+            <div className="text-red-600 text-sm sm:text-base mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              {locationError}
+            </div>
+          )}
         </div>
       </div>
     </main>
