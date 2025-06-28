@@ -69,7 +69,9 @@ export default function Home() {
         setIsGettingLocation(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocationError("Location access was denied. Please enable location services and try again.");
+            setLocationError(
+              "Location access was denied. Please enable location services and try again."
+            );
             break;
           case error.POSITION_UNAVAILABLE:
             setLocationError("Location information is unavailable.");
@@ -78,14 +80,16 @@ export default function Home() {
             setLocationError("Location request timed out. Please try again.");
             break;
           default:
-            setLocationError("An unknown error occurred while getting your location.");
+            setLocationError(
+              "An unknown error occurred while getting your location."
+            );
             break;
         }
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 300000 // 5 minutes
+        maximumAge: 300000, // 5 minutes
       }
     );
   };
@@ -101,7 +105,7 @@ export default function Home() {
 
     try {
       const coords = await postcodeToCoords(postcodeInput);
-      
+
       if (coords) {
         // Navigate to map page with coordinates
         router.push(`/map?lat=${coords[0]}&lng=${coords[1]}`);
@@ -116,70 +120,115 @@ export default function Home() {
   };
 
   const handlePostcodeKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handlePostcodeGo();
     }
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 bg-gray-50">
-      <div className="w-full max-w-4xl mx-auto text-center space-y-8 sm:space-y-10 lg:space-y-12">
-        {/* Header */}
-        <div className="space-y-4 sm:space-y-6">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-tight">
-            OpenCrimeReports
-          </h1>
-          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-700 leading-relaxed max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl mx-auto px-2 sm:px-0">
-            Report crimes and anti-social behaviour in your area; view a
-            real-time map of user reports.
-          </p>
-        </div>
-
-        {/* Search Form */}
-        <div className="space-y-4 sm:space-y-5 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-          <div className="relative flex gap-2">
-            <input
-              type="text"
-              value={postcodeInput}
-              onChange={(e) => setPostcodeInput(e.target.value)}
-              onKeyPress={handlePostcodeKeyPress}
-              placeholder="Enter a UK postcode, street, or address"
-              className="flex-1 px-4 sm:px-5 md:px-6 py-3 sm:py-4 text-base sm:text-lg md:text-xl border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
-            />
-            <button
-              type="button"
-              onClick={handlePostcodeGo}
-              disabled={isGeocodingPostcode}
-              className="px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 text-white text-base sm:text-lg md:text-xl font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isGeocodingPostcode ? "..." : "Go"}
-            </button>
+    <main className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Mobile-first responsive container */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+        <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 lg:space-y-12">
+          {/* Header Section */}
+          <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 tracking-tight leading-tight px-2">
+              ProtectOurStreets
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-700 leading-relaxed max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-2">
+              Report crimes and anti-social behaviour in your area; view a
+              real-time map of user reports.
+            </p>
           </div>
 
-          {/* Postcode Error message */}
-          {postcodeError && (
-            <div className="text-red-600 text-sm sm:text-base mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              {postcodeError}
-            </div>
-          )}
+          {/* Search Section */}
+          <div className="space-y-4 sm:space-y-5 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+            {/* Postcode Input */}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <input
+                  type="text"
+                  value={postcodeInput}
+                  onChange={(e) => setPostcodeInput(e.target.value)}
+                  onKeyPress={handlePostcodeKeyPress}
+                  placeholder="Enter a UK postcode, street, or address"
+                  className="flex-1 px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 md:py-4 text-sm sm:text-base md:text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors w-full"
+                />
+                <button
+                  type="button"
+                  onClick={handlePostcodeGo}
+                  disabled={isGeocodingPostcode}
+                  className="px-6 sm:px-8 py-3 sm:py-3.5 md:py-4 bg-blue-600 text-white text-sm sm:text-base md:text-lg font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-w-[80px] sm:min-w-[100px]"
+                >
+                  {isGeocodingPostcode ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    </div>
+                  ) : (
+                    "Go"
+                  )}
+                </button>
+              </div>
 
-          <button
-            type="button"
-            onClick={handleUseMyLocation}
-            disabled={isGettingLocation}
-            className="w-full bg-gray-900 text-white text-base sm:text-lg md:text-xl font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-800 active:bg-gray-950 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGettingLocation ? "Getting your location..." : "Use my location"}
-          </button>
-
-          {/* Location Error message */}
-          {locationError && (
-            <div className="text-red-600 text-sm sm:text-base mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              {locationError}
+              {/* Postcode Error */}
+              {postcodeError && (
+                <div className="text-red-600 text-xs sm:text-sm p-3 bg-red-50 border border-red-200 rounded-lg text-left">
+                  {postcodeError}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Location Button */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={isGettingLocation}
+                className="w-full bg-gray-900 text-white text-sm sm:text-base md:text-lg font-semibold py-3 sm:py-3.5 md:py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-800 active:bg-gray-950 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGettingLocation ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <span>Getting your location...</span>
+                  </div>
+                ) : (
+                  "Use my location"
+                )}
+              </button>
+
+              {/* Location Error */}
+              {locationError && (
+                <div className="text-red-600 text-xs sm:text-sm p-3 bg-red-50 border border-red-200 rounded-lg text-left">
+                  {locationError}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Info Section */}
+          <div className="pt-4 sm:pt-6 lg:pt-8">
+            <div className="space-y-2 sm:space-y-3">
+              <p className="text-xs sm:text-sm text-gray-500">
+                Help your community stay safe by reporting incidents you witness
+              </p>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-400">
+                <span>📍 View local reports</span>
+                <span>📝 Submit anonymously</span>
+                <span>🗺️ Interactive map</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="py-4 px-4 border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-center text-xs sm:text-sm text-gray-500">
+            © 2024 ProtectOurStreets. Helping communities stay safe.
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }
