@@ -453,17 +453,16 @@ export default function MapPage() {
     <main className="relative h-screen w-full flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center z-[1000]">
-        <h1 className="text-2xl font-bold text-gray-900">OpenCrimeReports</h1>
+        <h1 className="text-2xl font-bold text-gray-900">ProtectOurStreets</h1>
         <div className="flex gap-6">
-          <Link href="/map">
-            <button className="text-gray-700 hover:text-gray-900 font-medium">
-              Map
-            </button>
-          </Link>
-          <Link href="/dashboard">
-            <button className="text-gray-700 hover:text-gray-900 font-medium">
-              Dashboard
-            </button>
+          <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
+            Map
+          </span>
+          <Link
+            href="/dashboard"
+            className="text-gray-700 hover:text-gray-900 font-medium"
+          >
+            Dashboard
           </Link>
         </div>
       </header>

@@ -394,53 +394,6 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
-
-            {/* Quick Actions */}
-            <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Link
-                  href="/map"
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-2xl">🗺️</div>
-                  <div>
-                    <div className="font-medium">View Map</div>
-                    <div className="text-sm text-gray-600">
-                      See all reports on interactive map
-                    </div>
-                  </div>
-                </Link>
-
-                <button
-                  onClick={() => (window.location.href = "/map")}
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-2xl">📝</div>
-                  <div>
-                    <div className="font-medium">Report Crime</div>
-                    <div className="text-sm text-gray-600">
-                      Submit a new crime report
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={loadDashboardData}
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-2xl">🔄</div>
-                  <div>
-                    <div className="font-medium">Refresh Data</div>
-                    <div className="text-sm text-gray-600">
-                      Update dashboard statistics
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
           </>
         )}
       </div>
