@@ -251,7 +251,7 @@ export const AudioRecorder = ({
         <div className="mt-3 flex items-center gap-2 text-red-600">
           <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
           <span className="text-sm font-medium">
-            Recording... Click "Stop Recording" when done
+            Recording... Click &quot;Stop Recording&quot; when done
           </span>
         </div>
       )}
