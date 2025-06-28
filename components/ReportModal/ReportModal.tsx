@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ReportFormData, OSMPlace } from "@/types";
-import { ReportForm } from "./ReportForm";
+import ReportForm from "./ReportForm";
 import { useEffect, useRef } from "react";
 
 interface ReportModalProps {
@@ -17,7 +17,7 @@ export const ReportModal = ({
 }: ReportModalProps) => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [postcodeError, setPostcodeError] = useState<string | null>(null);  
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ReportFormData>({
     postcode: "",
     addressDetails: "",
@@ -123,7 +123,9 @@ export const ReportModal = ({
     const normalized = postcode.toUpperCase().trim();
 
     try {
-      console.log(`https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`)
+      console.log(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
       const response = await fetch(
         `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
       );
