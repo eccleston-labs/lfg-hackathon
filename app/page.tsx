@@ -9,7 +9,7 @@ export default async function Home() {
         {/* Header */}
         <div className="space-y-4 sm:space-y-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-tight">
-            ProtectOurStreets
+            OpenCrimeReports
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-700 leading-relaxed max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl mx-auto px-2 sm:px-0">
             Report crimes and anti-social behaviour in your area; view a
