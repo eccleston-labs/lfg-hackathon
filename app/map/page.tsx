@@ -367,7 +367,7 @@ export default function MapPage() {
             {reports.length > reports.filter((r) => r.coordinates).length && (
               <div className="text-xs text-orange-600">
                 {reports.length - reports.filter((r) => r.coordinates).length}{" "}
-                reports couldn't be geocoded
+                reports couldn&apos;t be geocoded
               </div>
             )}
           </div>
