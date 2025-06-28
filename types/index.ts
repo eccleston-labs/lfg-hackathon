@@ -21,6 +21,16 @@ export interface MapBounds {
   west: number;
 }
 
+export interface OSMPlace {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type: string;
+  category: string;
+  importance: number;
+}
+
 export interface ReportFormData {
   postcode: string;
   addressDetails: string;
@@ -31,4 +41,5 @@ export interface ReportFormData {
   contactDetails: string;
   hasVehicle: boolean;
   hasWeapon: boolean;
+  selectedPlace?: OSMPlace;
 }

@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { ReportFormData } from "@/types";
+import { ReportFormData, OSMPlace } from "@/types";
 import { ReportForm } from "./ReportForm";
 
 interface ReportModalProps {
@@ -26,6 +26,7 @@ export const ReportModal = ({
     contactDetails: "",
     hasVehicle: false,
     hasWeapon: false,
+    selectedPlace: undefined,
   });
 
   const supabase = createClient();
@@ -34,6 +35,13 @@ export const ReportModal = ({
     setFormData((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  const handlePlaceSelect = (place: OSMPlace | undefined) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedPlace: place,
     }));
   };
 
@@ -121,7 +129,11 @@ export const ReportModal = ({
       const reportData = {
         raw_text: formData.whatHappened,
         postcode: formData.postcode,
-        location_hint: formData.addressDetails,
+        location_hint:
+          formData.addressDetails +
+          (formData.selectedPlace
+            ? ` | Selected place: ${formData.selectedPlace.display_name}`
+            : ""),
         time_description: formData.whenHappened,
         time_known: Boolean(formData.whenHappened.trim()),
         people_names: formData.peopleDetails,
@@ -134,6 +146,13 @@ export const ReportModal = ({
         shared_with_crimestoppers: false,
         status: "submitted",
         user_id: placeholder_user_id,
+        // Add place coordinates if available
+        ...(formData.selectedPlace && {
+          coordinates: [
+            parseFloat(formData.selectedPlace.lat),
+            parseFloat(formData.selectedPlace.lon),
+          ],
+        }),
       };
 
       console.log("Attempting to submit report with data:", reportData);
@@ -185,6 +204,7 @@ export const ReportModal = ({
         contactDetails: "",
         hasVehicle: false,
         hasWeapon: false,
+        selectedPlace: undefined,
       });
       setSelectedImages([]);
 
@@ -210,6 +230,16 @@ export const ReportModal = ({
       contactDetails: "No known contact details",
       hasVehicle: false,
       hasWeapon: false,
+      selectedPlace: {
+        place_id: 12345,
+        display_name:
+          "University of Sheffield, Western Bank, Sheffield, South Yorkshire, England, United Kingdom",
+        lat: "53.3811",
+        lon: "-1.4879",
+        type: "university",
+        category: "amenity",
+        importance: 0.8,
+      },
     });
   };
 
@@ -233,6 +263,7 @@ export const ReportModal = ({
         <ReportForm
           formData={formData}
           onInputChange={handleInputChange}
+          onPlaceSelect={handlePlaceSelect}
           onSubmit={handleSubmitReport}
           selectedImages={selectedImages}
           onImageSelect={handleImageSelect}
