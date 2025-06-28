@@ -38,6 +38,7 @@ interface Report {
   has_vehicle: boolean;
   has_weapon: boolean;
   coordinates?: [number, number];
+  photos?: { id: string; file_path: string }[];
 }
 
 interface MapBounds {
@@ -82,6 +83,8 @@ export default function MapPage() {
   const [mapKey, setMapKey] = useState(0); // Force map remount
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [nearbyReports, setNearbyReports] = useState<Report[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     postcode: "",
     addressDetails: "",
@@ -186,32 +189,59 @@ export default function MapPage() {
   const loadReports = async () => {
     try {
       setIsLoadingReports(true);
-      const { data, error } = await supabase
+
+      // Load reports with photos
+      const { data: reportsData, error: reportsError } = await supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error loading reports:", error);
+      if (reportsError) {
+        console.error("Error loading reports:", reportsError);
         return;
       }
 
-      console.log("Loaded reports from DB:", data);
+      // Load photos for all reports
+      const { data: photosData, error: photosError } = await supabase
+        .from("report_photos")
+        .select("*");
 
-      // Geocode postcodes for all reports
+      if (photosError) {
+        console.error("Error loading photos:", photosError);
+        // Continue without photos if there's an error
+      }
+
+      console.log("Loaded reports from DB:", reportsData);
+      console.log("Loaded photos from DB:", photosData);
+
+      // Group photos by report_id
+      const photosByReportId = (photosData || []).reduce((acc, photo) => {
+        if (!acc[photo.report_id]) {
+          acc[photo.report_id] = [];
+        }
+        acc[photo.report_id].push(photo);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      // Geocode postcodes for all reports and attach photos
       const reportsWithCoords = await Promise.all(
-        (data || []).map(async (report) => {
+        (reportsData || []).map(async (report) => {
           console.log(`Geocoding postcode: ${report.postcode}`);
           const coords = await postcodeToCoords(report.postcode);
           console.log(`Geocoded ${report.postcode} to:`, coords);
+
+          // Get photos for this report
+          const reportPhotos = photosByReportId[report.id] || [];
+
           return {
             ...report,
             coordinates: coords,
+            photos: reportPhotos,
           };
         })
       );
 
-      console.log("Reports with coordinates:", reportsWithCoords);
+      console.log("Reports with coordinates and photos:", reportsWithCoords);
       console.log(
         "Reports that will render (have coordinates):",
         reportsWithCoords.filter((r) => r.coordinates)
@@ -232,10 +262,80 @@ export default function MapPage() {
     }));
   };
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+
+    // Validate files
+    const validFiles = files.filter((file) => {
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} is not an image file`);
+        return false;
+      }
+
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is too large. Max size is 5MB`);
+        return false;
+      }
+
+      return true;
+    });
+
+    // Check total count (max 5 images)
+    if (selectedImages.length + validFiles.length > 5) {
+      alert("Maximum 5 images allowed per report");
+      return;
+    }
+
+    setSelectedImages((prev) => [...prev, ...validFiles]);
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (selectedImages.length === 0) return [];
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of selectedImages) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
+      const filePath = `reports/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from("media")
+        .upload(filePath, file);
+
+      if (error) {
+        console.error("Error uploading image:", error);
+        throw new Error(`Failed to upload ${file.name}`);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("media")
+        .getPublicUrl(filePath);
+
+      uploadedUrls.push(urlData.publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
+      setIsUploading(true);
+
+      // Upload images first
+      const imageUrls = await uploadImages();
+
       // TODO: Replace with actual user authentication
       // For now, using a placeholder user_id - you'll need to implement proper auth
       const placeholder_user_id = "d8c36489-f008-4022-9b51-df6469dc81eb";
@@ -277,14 +377,33 @@ export default function MapPage() {
         return;
       }
 
-      console.log("Report submitted successfully:", data);
+      const newReport = data[0];
+      console.log("Report submitted successfully:", newReport);
+
+      // Now create photo records if we have images
+      if (imageUrls.length > 0 && newReport) {
+        const photoData = imageUrls.map((url) => ({
+          report_id: newReport.id,
+          file_path: url,
+        }));
+
+        const { error: photoError } = await supabase
+          .from("report_photos")
+          .insert(photoData);
+
+        if (photoError) {
+          console.error("Error saving photos:", photoError);
+          alert("Report saved but some photos failed to attach");
+        }
+      }
+
       alert("Report submitted successfully!");
       setIsReportModalOpen(false);
 
       // Reload reports to show the new one
       await loadReports();
 
-      // Reset form
+      // Reset form and images
       setFormData({
         postcode: "",
         addressDetails: "",
@@ -296,6 +415,7 @@ export default function MapPage() {
         hasVehicle: false,
         hasWeapon: false,
       });
+      setSelectedImages([]);
     } catch (error) {
       console.error("Unexpected error during submission:", {
         error: error,
@@ -308,6 +428,8 @@ export default function MapPage() {
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -357,9 +479,16 @@ export default function MapPage() {
                     key={report.id}
                     className="border-2 border-black rounded-lg p-4 bg-white"
                   >
-                    <div className="font-medium text-gray-900 mb-2">
-                      {report.crime_type || "Crime"} at{" "}
-                      {report.location_hint || report.postcode}
+                    <div className="font-medium text-gray-900 mb-2 flex items-center justify-between">
+                      <span>
+                        {report.crime_type || "Crime"} at{" "}
+                        {report.location_hint || report.postcode}
+                      </span>
+                      {report.photos && report.photos.length > 0 && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center gap-1">
+                          📷 {report.photos.length}
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
                       {report.time_description &&
@@ -486,6 +615,27 @@ export default function MapPage() {
                             {report.people_appearance}
                           </div>
                         )}
+
+                        {/* Images */}
+                        {report.photos && report.photos.length > 0 && (
+                          <div>
+                            <span className="font-semibold">Photos:</span>
+                            <div className="mt-2 grid grid-cols-2 gap-1">
+                              {report.photos.map((photo, index) => (
+                                <img
+                                  key={index}
+                                  src={photo.file_path}
+                                  alt={`Report photo ${index + 1}`}
+                                  className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75"
+                                  onClick={() =>
+                                    window.open(photo.file_path, "_blank")
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="flex gap-2 mt-2">
                           {report.has_vehicle && (
                             <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
@@ -723,14 +873,68 @@ export default function MapPage() {
                     weapon/weapons?
                   </label>
                 </div>
+
+                {/* Attach Photos */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Attach photos (optional)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="w-full py-3 px-4 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <span>Choose photos (max 5, 5MB each)</span>
+                  </label>
+
+                  {/* Image Previews */}
+                  {selectedImages.length > 0 && (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {selectedImages.map((file, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                          <div className="text-xs text-gray-500 mt-1 truncate">
+                            {file.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-gray-900 text-white font-bold text-lg py-3 rounded-lg hover:bg-gray-800 transition-colors"
+                disabled={isUploading}
+                className="w-full bg-gray-900 text-white font-bold text-lg py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isUploading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    Uploading images & submitting...
+                  </div>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </form>
           </div>
