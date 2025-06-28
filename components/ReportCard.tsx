@@ -10,16 +10,19 @@ export const ReportCard = ({ report }: ReportCardProps) => {
   const [modalImage, setModalImage] = useState<string | null>(null);
 
   return (
-    <div className="border-2 border-black rounded-lg p-4 bg-white">
-      <div className="font-medium text-gray-900 mb-2 flex items-center justify-between">
-        <span>
-          {report.crime_type || "Crime"} at{" "}
-          {report.location_hint || report.postcode}
-        </span>
+    <div className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+      {/* Header with crime type and photo indicator */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-gray-900 capitalize">
+            {report.crime_type || "Crime"}
+          </span>
+          <span className="text-gray-500 text-sm">• {report.postcode}</span>
+        </div>
         {Array.isArray(report.photos) && report.photos.length > 0 && (
           <button
             type="button"
-            className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center gap-1"
+            className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex items-center gap-1 hover:bg-gray-200 transition-colors"
             onClick={() =>
               report.photos && setModalImage(report.photos[0].file_path)
             }
@@ -30,50 +33,41 @@ export const ReportCard = ({ report }: ReportCardProps) => {
         )}
       </div>
 
-      {/* AI Summary */}
-      {report.ai_summary && (
-        <div className="text-sm text-blue-700 font-medium mb-2 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
-          <div className="flex items-start gap-2">
-            <span className="text-blue-500 text-xs mt-0.5">🤖</span>
-            <span className="italic">{report.ai_summary}</span>
-          </div>
+      {/* AI Summary - Main Content */}
+      {report.ai_summary ? (
+        <div className="text-gray-800 mb-3 leading-relaxed">
+          {report.ai_summary}
+        </div>
+      ) : (
+        <div className="text-gray-600 mb-3 line-clamp-2 text-sm">
+          {report.raw_text}
         </div>
       )}
 
-      <div className="text-sm text-gray-600 mb-2">
-        {report.time_description && `When: ${report.time_description}`}
+      {/* Footer with time and tags */}
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-gray-500">
+          {report.time_description ||
+            new Date(report.created_at).toLocaleDateString()}
+        </div>
+        <div className="flex gap-1">
+          {report.has_vehicle && (
+            <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+              Vehicle
+            </span>
+          )}
+          {report.has_weapon && (
+            <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+              Weapon
+            </span>
+          )}
+        </div>
       </div>
-      <div className="text-sm text-gray-700 line-clamp-3">
-        {report.raw_text}
-      </div>
-      <div className="flex gap-1 mt-2">
-        {report.has_vehicle && (
-          <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-            Vehicle
-          </span>
-        )}
-        {report.has_weapon && (
-          <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-            Weapon
-          </span>
-        )}
-      </div>
+
       {/* Modal */}
       {modalImage &&
         createPortal(
           <div
-            style={{
-              position: "fixed",
-              left: 0,
-              top: 0,
-              width: "100vw",
-              height: "100vh",
-              background: "rgba(0,0,0,0.8)",
-              zIndex: 99999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
             onClick={() => setModalImage(null)}
           >

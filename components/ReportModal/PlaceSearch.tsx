@@ -13,7 +13,9 @@ export const PlaceSearch = ({
   onPlaceSelect,
   placeholder = "Search for a place...",
 }: PlaceSearchProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(
+    selectedPlace?.display_name || ""
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
     null
@@ -24,19 +26,24 @@ export const PlaceSearch = ({
   const { searchResults, isSearching, searchPlaces, clearResults } =
     usePlaceSearch();
 
+  // Update search query when selectedPlace changes
+  useEffect(() => {
+    setSearchQuery(selectedPlace?.display_name || "");
+  }, [selectedPlace]);
+
   // Handle search with debouncing
   useEffect(() => {
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    if (searchQuery.trim()) {
+    if (searchQuery.trim() && !selectedPlace) {
       const timeout = setTimeout(() => {
         searchPlaces(searchQuery);
         setIsDropdownOpen(true);
       }, 300);
       setSearchTimeout(timeout);
-    } else {
+    } else if (!searchQuery.trim()) {
       clearResults();
       setIsDropdownOpen(false);
     }
@@ -46,7 +53,7 @@ export const PlaceSearch = ({
         clearTimeout(searchTimeout);
       }
     };
-  }, [searchQuery, searchPlaces, clearResults]);
+  }, [searchQuery, searchPlaces, clearResults, selectedPlace]);
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -104,7 +111,7 @@ export const PlaceSearch = ({
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none pr-10"
+          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none pr-10 text-gray-900"
           placeholder={placeholder}
         />
 

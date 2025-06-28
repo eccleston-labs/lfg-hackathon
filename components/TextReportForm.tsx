@@ -59,7 +59,7 @@ export default function TextReportForm({
             type="text"
             value={formData.postcode}
             onChange={(e) => onInputChange("postcode", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-900"
             placeholder="e.g. S10 5GG"
             required
           />
@@ -80,7 +80,7 @@ export default function TextReportForm({
           <textarea
             value={formData.addressDetails}
             onChange={(e) => onInputChange("addressDetails", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none text-gray-900"
             placeholder="Additional location details..."
           />
         </div>
@@ -111,7 +111,7 @@ export default function TextReportForm({
             type="text"
             value={formData.whenHappened}
             onChange={(e) => onInputChange("whenHappened", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-900"
             placeholder="Date and time..."
             required
           />
@@ -126,7 +126,7 @@ export default function TextReportForm({
           <textarea
             value={formData.whatHappened}
             onChange={(e) => onInputChange("whatHappened", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-24 resize-none text-gray-900"
             placeholder="Describe what happened..."
             required
           />
@@ -142,7 +142,7 @@ export default function TextReportForm({
           <textarea
             value={formData.peopleDetails}
             onChange={(e) => onInputChange("peopleDetails", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none text-gray-900"
             placeholder="Names, ages, addresses..."
           />
         </div>
@@ -155,7 +155,7 @@ export default function TextReportForm({
           <textarea
             value={formData.peopleAppearance}
             onChange={(e) => onInputChange("peopleAppearance", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none h-20 resize-none text-gray-900"
             placeholder="Physical description..."
           />
         </div>
@@ -169,7 +169,7 @@ export default function TextReportForm({
             type="text"
             value={formData.contactDetails}
             onChange={(e) => onInputChange("contactDetails", e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-900"
             placeholder="Phone numbers, social media, etc..."
           />
         </div>
