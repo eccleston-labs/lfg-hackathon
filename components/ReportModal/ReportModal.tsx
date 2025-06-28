@@ -146,13 +146,6 @@ export const ReportModal = ({
         shared_with_crimestoppers: false,
         status: "submitted",
         user_id: placeholder_user_id,
-        // Add place coordinates if available
-        ...(formData.selectedPlace && {
-          coordinates: [
-            parseFloat(formData.selectedPlace.lat),
-            parseFloat(formData.selectedPlace.lon),
-          ],
-        }),
       };
 
       console.log("Attempting to submit report with data:", reportData);
