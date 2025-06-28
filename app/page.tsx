@@ -9,6 +9,45 @@ export default function Home() {
   const router = useRouter();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [postcodeInput, setPostcodeInput] = useState("");
+  const [isGeocodingPostcode, setIsGeocodingPostcode] = useState(false);
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);
+
+  // Postcode geocoding using postcodes.io API (same as map page)
+  const postcodeToCoords = async (
+    postcode: string
+  ): Promise<[number, number] | null> => {
+    if (!postcode) return null;
+
+    const normalized = postcode.toUpperCase().trim();
+
+    try {
+      const response = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
+
+      if (!response.ok) {
+        console.warn(`Postcode API error for ${normalized}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.status === 200 && data.result) {
+        const coords: [number, number] = [
+          data.result.latitude,
+          data.result.longitude,
+        ];
+        return coords;
+      } else {
+        console.warn(`Invalid postcode: ${normalized}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error geocoding postcode ${normalized}:`, error);
+      return null;
+    }
+  };
 
   const handleUseMyLocation = async () => {
     setIsGettingLocation(true);
@@ -51,6 +90,37 @@ export default function Home() {
     );
   };
 
+  const handlePostcodeGo = async () => {
+    if (!postcodeInput.trim()) {
+      setPostcodeError("Please enter a postcode.");
+      return;
+    }
+
+    setIsGeocodingPostcode(true);
+    setPostcodeError(null);
+
+    try {
+      const coords = await postcodeToCoords(postcodeInput);
+      
+      if (coords) {
+        // Navigate to map page with coordinates
+        router.push(`/map?lat=${coords[0]}&lng=${coords[1]}`);
+      } else {
+        setPostcodeError("Invalid postcode. Please check and try again.");
+      }
+    } catch (error) {
+      setPostcodeError("Error looking up postcode. Please try again.");
+    } finally {
+      setIsGeocodingPostcode(false);
+    }
+  };
+
+  const handlePostcodeKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePostcodeGo();
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 bg-gray-50">
       <div className="w-full max-w-4xl mx-auto text-center space-y-8 sm:space-y-10 lg:space-y-12">
@@ -67,13 +137,31 @@ export default function Home() {
 
         {/* Search Form */}
         <div className="space-y-4 sm:space-y-5 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-          <div className="relative">
+          <div className="relative flex gap-2">
             <input
               type="text"
+              value={postcodeInput}
+              onChange={(e) => setPostcodeInput(e.target.value)}
+              onKeyPress={handlePostcodeKeyPress}
               placeholder="Enter a UK postcode, street, or address"
-              className="w-full px-4 sm:px-5 md:px-6 py-3 sm:py-4 text-base sm:text-lg md:text-xl border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+              className="flex-1 px-4 sm:px-5 md:px-6 py-3 sm:py-4 text-base sm:text-lg md:text-xl border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
             />
+            <button
+              type="button"
+              onClick={handlePostcodeGo}
+              disabled={isGeocodingPostcode}
+              className="px-4 sm:px-6 py-3 sm:py-4 bg-blue-600 text-white text-base sm:text-lg md:text-xl font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGeocodingPostcode ? "..." : "Go"}
+            </button>
           </div>
+
+          {/* Postcode Error message */}
+          {postcodeError && (
+            <div className="text-red-600 text-sm sm:text-base mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              {postcodeError}
+            </div>
+          )}
 
           <button
             type="button"
@@ -84,7 +172,7 @@ export default function Home() {
             {isGettingLocation ? "Getting your location..." : "Use my location"}
           </button>
 
-          {/* Error message */}
+          {/* Location Error message */}
           {locationError && (
             <div className="text-red-600 text-sm sm:text-base mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
               {locationError}
