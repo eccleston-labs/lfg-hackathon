@@ -23,11 +23,11 @@ export const NearbyReportsSidebar = ({
       className={`
         w-80 bg-white border-r border-gray-300 flex flex-col transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0 lg:relative absolute inset-y-0 left-0 z-40
+        lg:translate-x-0 lg:static absolute inset-y-0 left-0 z-40
       `}
     >
       {/* Nearby Reports Section */}
-      <div className="p-6">
+      <div className="p-6 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Nearby reports</h2>
           {/* Close button for mobile */}
@@ -77,7 +77,7 @@ export const NearbyReportsSidebar = ({
       </div>
 
       {/* Reports Info */}
-      <div className="px-6 pb-4">
+      <div className="px-6 pb-4 border-t border-gray-200">
         {isLoadingReports ? (
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
