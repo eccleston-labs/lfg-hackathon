@@ -18,18 +18,8 @@ const isWithinBounds = (
 export const useMapBounds = (reports: Report[]) => {
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
 
-  // Set initial map bounds (rough estimate for London area)
-  useEffect(() => {
-    if (reports.length > 0 && !mapBounds) {
-      // Set initial bounds to London area
-      setMapBounds({
-        north: 51.6,
-        south: 51.4,
-        east: 0.1,
-        west: -0.3,
-      });
-    }
-  }, [reports.length, mapBounds]);
+  // Initial map bounds will be set by the map component itself
+  // No need for hardcoded initial bounds
 
   // Calculate nearby reports based on current map bounds
   const nearbyReports = useMemo(() => {

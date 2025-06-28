@@ -1,8 +1,9 @@
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Report } from "@/types";
+import { Report, MapBounds } from "@/types";
 import { ReportMarker } from "./ReportMarker";
+import { MapBoundsUpdater } from "./MapBoundsUpdater";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import MapContainer to avoid SSR issues
@@ -23,9 +24,13 @@ const ZoomControl = dynamic(
 
 interface InteractiveMapProps {
   reports: Report[];
+  onMapBoundsChange?: (bounds: MapBounds) => void;
 }
 
-export const InteractiveMap = ({ reports }: InteractiveMapProps) => {
+export const InteractiveMap = ({
+  reports,
+  onMapBoundsChange,
+}: InteractiveMapProps) => {
   const searchParams = useSearchParams();
   const [mapKey, setMapKey] = useState(0); // Force map remount
 
@@ -75,6 +80,9 @@ export const InteractiveMap = ({ reports }: InteractiveMapProps) => {
         />
 
         <ZoomControl position="topright" />
+
+        {/* Map bounds updater */}
+        <MapBoundsUpdater onMapBoundsChange={onMapBoundsChange} />
 
         {/* Report Markers */}
         {reports.map((report) => (

@@ -395,6 +395,40 @@ export const ReportModal = ({
       const newReport = data; // Fixed: .single() returns object, not array
       console.log("Report submitted successfully:", newReport);
 
+      // Generate AI summary for the report
+      try {
+        const summaryResponse = await fetch("/api/generate-summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ report: newReport }),
+        });
+
+        if (summaryResponse.ok) {
+          const summaryData = await summaryResponse.json();
+          if (summaryData.success && summaryData.summary) {
+            // Update the report with the AI summary
+            const { error: summaryError } = await supabase
+              .from("reports")
+              .update({ ai_summary: summaryData.summary })
+              .eq("id", newReport.id);
+
+            if (summaryError) {
+              console.error(
+                "Error updating report with AI summary:",
+                summaryError
+              );
+            } else {
+              console.log("AI summary added to report:", summaryData.summary);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error generating AI summary:", error);
+        // Don't fail the entire submission if summary generation fails
+      }
+
       // Insert photos if any
       if (imageUrls.length > 0 && newReport) {
         const photoInserts = imageUrls.map((url) => ({

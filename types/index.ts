@@ -12,6 +12,7 @@ export interface Report {
   has_weapon: boolean;
   coordinates?: [number, number];
   photos?: { id: string; file_path: string }[];
+  ai_summary?: string;
 }
 
 export interface MapBounds {

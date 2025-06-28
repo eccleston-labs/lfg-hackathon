@@ -206,6 +206,51 @@ export async function POST(request: NextRequest) {
       newReport.id
     );
 
+    // Generate AI summary for the report
+    try {
+      const summaryResponse = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+        }/api/generate-summary`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ report: newReport }),
+        }
+      );
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        if (summaryData.success && summaryData.summary) {
+          // Update the report with the AI summary
+          const { error: summaryError } = await supabase
+            .from("reports")
+            .update({ ai_summary: summaryData.summary })
+            .eq("id", newReport.id);
+
+          if (summaryError) {
+            console.error(
+              "Error updating crimestoppers report with AI summary:",
+              summaryError
+            );
+          } else {
+            console.log(
+              "AI summary added to crimestoppers report:",
+              summaryData.summary
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Error generating AI summary for crimestoppers report:",
+        error
+      );
+      // Don't fail the entire submission if summary generation fails
+    }
+
     return NextResponse.json({
       success: true,
       reportId: newReport.id,

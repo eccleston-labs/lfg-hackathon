@@ -1,6 +1,6 @@
 import { Report } from "@/types";
 import { useState } from "react";
-import { createPortal } from 'react-dom';
+import { createPortal } from "react-dom";
 
 interface ReportCardProps {
   report: Report;
@@ -20,13 +20,26 @@ export const ReportCard = ({ report }: ReportCardProps) => {
           <button
             type="button"
             className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center gap-1"
-            onClick={() => report.photos && setModalImage(report.photos[0].file_path)}
+            onClick={() =>
+              report.photos && setModalImage(report.photos[0].file_path)
+            }
             title="View photo"
           >
             📷 {report.photos.length}
           </button>
         )}
       </div>
+
+      {/* AI Summary */}
+      {report.ai_summary && (
+        <div className="text-sm text-blue-700 font-medium mb-2 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
+          <div className="flex items-start gap-2">
+            <span className="text-blue-500 text-xs mt-0.5">🤖</span>
+            <span className="italic">{report.ai_summary}</span>
+          </div>
+        </div>
+      )}
+
       <div className="text-sm text-gray-600 mb-2">
         {report.time_description && `When: ${report.time_description}`}
       </div>
@@ -46,31 +59,33 @@ export const ReportCard = ({ report }: ReportCardProps) => {
         )}
       </div>
       {/* Modal */}
-      {modalImage && createPortal(
-        <div
-          style={{
-            position: "fixed",
-            left: 0,
-            top: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.8)",
-            zIndex: 99999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-          onClick={() => setModalImage(null)}
-        >
-          <img
-            src={modalImage}
-            alt="Report"
-            className="max-h-[80vh] max-w-[90vw] rounded shadow-lg"
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
-      , document.body)}
+      {modalImage &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.8)",
+              zIndex: 99999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setModalImage(null)}
+          >
+            <img
+              src={modalImage}
+              alt="Report"
+              className="max-h-[80vh] max-w-[90vw] rounded shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

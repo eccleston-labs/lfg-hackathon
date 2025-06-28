@@ -30,6 +30,7 @@ CREATE TABLE public.reports (
   has_vehicle boolean,
   has_weapon boolean,
   user_id uuid NOT NULL,
+  ai_summary text,
   CONSTRAINT reports_pkey PRIMARY KEY (id),
   CONSTRAINT reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );

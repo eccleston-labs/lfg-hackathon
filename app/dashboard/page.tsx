@@ -18,6 +18,7 @@ interface Report {
   has_vehicle: boolean;
   has_weapon: boolean;
   photos?: { id: string; file_path: string }[];
+  ai_summary?: string;
 }
 
 interface DashboardStats {
@@ -335,6 +336,16 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* AI Summary */}
+                    {report.ai_summary && (
+                      <div className="text-sm text-blue-700 font-medium mb-2 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
+                        <div className="flex items-start gap-2">
+                          <span className="text-blue-500 text-xs">🤖</span>
+                          <span className="italic">{report.ai_summary}</span>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="text-sm text-gray-600 mb-2">
                       {report.time_description &&
