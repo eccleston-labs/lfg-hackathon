@@ -163,7 +163,7 @@ export const ReportModal = ({
         return;
       }
 
-      const newReport = data[0];
+      const newReport = data; // Fixed: .single() returns object, not array
       console.log("Report submitted successfully:", newReport);
 
       // Insert photos if any
@@ -171,6 +171,7 @@ export const ReportModal = ({
         const photoInserts = imageUrls.map((url) => ({
           report_id: newReport.id,
           file_path: url,
+          uploaded_at: new Date().toISOString(), // Added missing timestamp
         }));
 
         const { error: photoError } = await supabase
