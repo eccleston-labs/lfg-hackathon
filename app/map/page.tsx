@@ -40,6 +40,13 @@ interface Report {
   coordinates?: [number, number];
 }
 
+interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 // Simple marker that definitely works
 const createSimpleMarker = () => {
   if (typeof window === "undefined") return null;
@@ -53,11 +60,28 @@ const createSimpleMarker = () => {
   });
 };
 
+// Check if coordinates are within map bounds
+const isWithinBounds = (
+  coords: [number, number],
+  bounds: MapBounds
+): boolean => {
+  const [lat, lng] = coords;
+  return (
+    lat >= bounds.south &&
+    lat <= bounds.north &&
+    lng >= bounds.west &&
+    lng <= bounds.east
+  );
+};
+
 export default function MapPage() {
   const supabase = createClient();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
+  const [mapKey, setMapKey] = useState(0); // Force map remount
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [nearbyReports, setNearbyReports] = useState<Report[]>([]);
   const [formData, setFormData] = useState({
     postcode: "",
     addressDetails: "",
@@ -115,10 +139,49 @@ export default function MapPage() {
     }
   };
 
+  // Force map remount on component mount to prevent initialization errors
+  useEffect(() => {
+    setMapKey((prev) => prev + 1);
+  }, []);
+
   // Load reports on component mount
   useEffect(() => {
     loadReports();
   }, []);
+
+  // Update nearby reports when reports or map bounds change
+  useEffect(() => {
+    if (!mapBounds || !reports.length) {
+      setNearbyReports([]);
+      return;
+    }
+
+    const filtered = reports
+      .filter(
+        (report) =>
+          report.coordinates && isWithinBounds(report.coordinates, mapBounds)
+      )
+      .slice(0, 10) // Limit to 10 reports
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ); // Most recent first
+
+    setNearbyReports(filtered);
+  }, [reports, mapBounds]);
+
+  // Set initial map bounds (rough estimate for London area)
+  useEffect(() => {
+    if (reports.length > 0 && !mapBounds) {
+      // Set initial bounds to London area
+      setMapBounds({
+        north: 51.6,
+        south: 51.4,
+        east: 0.1,
+        west: -0.3,
+      });
+    }
+  }, [reports, mapBounds]);
 
   const loadReports = async () => {
     try {
@@ -264,57 +327,48 @@ export default function MapPage() {
   };
 
   return (
-    <main className="relative h-screen w-full">
-      <MapContainer
-        center={[51.505, -0.09]} // London coordinates
-        zoom={13}
-        className="h-full w-full"
-        zoomControl={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+    <main className="relative h-screen w-full flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center z-[1000]">
+        <h1 className="text-2xl font-bold text-gray-900">ProtectOurStreets</h1>
+        <div className="flex gap-6">
+          <button className="text-gray-700 hover:text-gray-900 font-medium">
+            Map
+          </button>
+          <button className="text-gray-700 hover:text-gray-900 font-medium">
+            Dashboard
+          </button>
+        </div>
+      </header>
 
-        {/* Report Markers */}
-        {reports.map((report) => {
-          const coords = report.coordinates;
-          if (!coords) return null;
-
-          const simpleIcon = createSimpleMarker();
-
-          return (
-            <Marker key={report.id} position={coords} icon={simpleIcon}>
-              <Popup>
-                <div className="p-2 max-w-xs">
-                  <div className="font-bold text-lg mb-2 capitalize">
-                    {report.crime_type || "Crime Report"}
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-semibold">Location:</span>{" "}
-                      {report.postcode}
-                      {report.location_hint && ` - ${report.location_hint}`}
+      {/* Main content area */}
+      <div className="flex-1 flex">
+        {/* Left Sidebar */}
+        <aside className="w-80 bg-white border-r border-gray-300 flex flex-col">
+          {/* Nearby Reports Section */}
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Nearby reports
+            </h2>
+            <div className="space-y-3">
+              {nearbyReports.length > 0 ? (
+                nearbyReports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="border-2 border-black rounded-lg p-4 bg-white"
+                  >
+                    <div className="font-medium text-gray-900 mb-2">
+                      {report.crime_type || "Crime"} at{" "}
+                      {report.location_hint || report.postcode}
                     </div>
-                    {report.time_description && (
-                      <div>
-                        <span className="font-semibold">When:</span>{" "}
-                        {report.time_description}
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-semibold">Description:</span>{" "}
+                    <div className="text-sm text-gray-600 mb-2">
+                      {report.time_description &&
+                        `When: ${report.time_description}`}
+                    </div>
+                    <div className="text-sm text-gray-700 line-clamp-3">
                       {report.raw_text}
                     </div>
-                    {report.people_appearance && (
-                      <div>
-                        <span className="font-semibold">
-                          Description of people:
-                        </span>{" "}
-                        {report.people_appearance}
-                      </div>
-                    )}
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-1 mt-2">
                       {report.has_vehicle && (
                         <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
                           Vehicle
@@ -326,52 +380,144 @@ export default function MapPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      Reported:{" "}
-                      {new Date(report.created_at).toLocaleDateString()}
-                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  {mapBounds ? (
+                    <div>
+                      <div className="text-lg mb-2">📍</div>
+                      <div>No reports in this area</div>
+                      <div className="text-sm mt-1">
+                        Try zooming out or moving the map
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-lg mb-2">🗺️</div>
+                      <div>Move the map to see nearby reports</div>
+                    </div>
+                  )}
                 </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-      </MapContainer>
-
-      {/* Report Button */}
-      <button
-        className="absolute bottom-6 right-6 bg-white text-black font-bold text-lg px-6 py-3 rounded-lg border-2 border-black hover:bg-gray-100 transition-colors shadow-lg z-[1000]"
-        onClick={() => setIsReportModalOpen(true)}
-      >
-        Report
-      </button>
-
-      {/* Reports Info */}
-      <div className="absolute top-6 left-6 bg-white rounded-lg shadow-lg p-3 z-[1000] border">
-        {isLoadingReports ? (
-          <div className="flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-            <span className="text-sm font-medium">Loading reports...</span>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="text-sm space-y-1">
-            <div className="font-medium">
-              <span className="text-blue-600">
-                {reports.filter((r) => r.coordinates).length}
-              </span>{" "}
-              reports on map
-            </div>
-            <div className="text-xs text-gray-500">
-              {reports.length} total reports loaded
-            </div>
-            {reports.length > reports.filter((r) => r.coordinates).length && (
-              <div className="text-xs text-orange-600">
-                {reports.length - reports.filter((r) => r.coordinates).length}{" "}
-                reports couldn&apos;t be geocoded
+
+          {/* Reports Info */}
+          <div className="px-6 pb-4">
+            {isLoadingReports ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                <span className="text-sm font-medium">Loading reports...</span>
+              </div>
+            ) : (
+              <div className="text-sm space-y-1">
+                <div className="font-medium">
+                  <span className="text-blue-600">
+                    {reports.filter((r) => r.coordinates).length}
+                  </span>{" "}
+                  reports on map
+                </div>
+                <div className="text-xs text-gray-500">
+                  {reports.length} total reports loaded
+                </div>
+                {reports.length >
+                  reports.filter((r) => r.coordinates).length && (
+                  <div className="text-xs text-orange-600">
+                    {reports.length -
+                      reports.filter((r) => r.coordinates).length}{" "}
+                    reports couldn&apos;t be geocoded
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </aside>
+
+        {/* Map Container */}
+        <div className="flex-1 relative">
+          <MapContainer
+            key={`main-map-${mapKey}`}
+            center={[51.505, -0.09]} // London coordinates
+            zoom={13}
+            className="h-full w-full"
+            zoomControl={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+            {/* Report Markers */}
+            {reports.map((report) => {
+              const coords = report.coordinates;
+              if (!coords) return null;
+
+              const simpleIcon = createSimpleMarker();
+
+              return (
+                <Marker key={report.id} position={coords} icon={simpleIcon}>
+                  <Popup>
+                    <div className="p-2 max-w-xs">
+                      <div className="font-bold text-lg mb-2 capitalize">
+                        {report.crime_type || "Crime Report"}
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="font-semibold">Location:</span>{" "}
+                          {report.postcode}
+                          {report.location_hint && ` - ${report.location_hint}`}
+                        </div>
+                        {report.time_description && (
+                          <div>
+                            <span className="font-semibold">When:</span>{" "}
+                            {report.time_description}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-semibold">Description:</span>{" "}
+                          {report.raw_text}
+                        </div>
+                        {report.people_appearance && (
+                          <div>
+                            <span className="font-semibold">
+                              Description of people:
+                            </span>{" "}
+                            {report.people_appearance}
+                          </div>
+                        )}
+                        <div className="flex gap-2 mt-2">
+                          {report.has_vehicle && (
+                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                              Vehicle
+                            </span>
+                          )}
+                          {report.has_weapon && (
+                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                              Weapon
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          Reported:{" "}
+                          {new Date(report.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+
+          {/* Report Button */}
+          <button
+            className="absolute bottom-6 right-6 bg-white text-black font-bold text-lg px-6 py-3 rounded-lg border-2 border-black hover:bg-gray-100 transition-colors shadow-lg z-[1000]"
+            onClick={() => setIsReportModalOpen(true)}
+          >
+            Report
+          </button>
+        </div>
       </div>
 
       {/* Report Modal */}
