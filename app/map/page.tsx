@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
 
 // Dynamically import MapContainer to avoid SSR issues
 const MapContainer = dynamic(
@@ -450,14 +451,17 @@ function MapPageContent() {
     <main className="relative h-screen w-full flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center z-[1000]">
-        <h1 className="text-2xl font-bold text-gray-900">OpenCrimeReports</h1>
+        <h1 className="text-2xl font-bold text-gray-900">ProtectOurStreets</h1>
         <div className="flex gap-6">
-          <button className="text-gray-700 hover:text-gray-900 font-medium">
+          <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
             Map
-          </button>
-          <button className="text-gray-700 hover:text-gray-900 font-medium">
+          </span>
+          <Link
+            href="/dashboard"
+            className="text-gray-700 hover:text-gray-900 font-medium"
+          >
             Dashboard
-          </button>
+          </Link>
         </div>
       </header>
 
