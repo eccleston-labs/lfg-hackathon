@@ -38,11 +38,6 @@ export const useRealtimeReports = ({
     }
 
     console.log("Setting up realtime subscription...");
-    console.log("Supabase URL:", supabaseRef.current.supabaseUrl);
-    console.log(
-      "Supabase Key:",
-      supabaseRef.current.supabaseKey?.substring(0, 20) + "..."
-    );
 
     // Create realtime subscription with more explicit setup
     const channel = supabaseRef.current
@@ -75,16 +70,17 @@ export const useRealtimeReports = ({
 
         setIsConnected(status === "SUBSCRIBED");
 
-        if (status === "SUBSCRIPTION_ERROR") {
-          console.error("Realtime subscription error occurred");
-        }
-
-        if (status === "CLOSED") {
-          console.log("Realtime subscription closed");
-        }
-
-        if (status === "CHANNEL_ERROR") {
-          console.error("Realtime channel error");
+        // Log different status types for debugging
+        switch (status) {
+          case "SUBSCRIBED":
+            console.log("Successfully subscribed to realtime updates");
+            break;
+          case "CLOSED":
+            console.log("Realtime subscription closed");
+            break;
+          default:
+            console.log("Realtime status:", status);
+            break;
         }
 
         // Try to get current session info for debugging
