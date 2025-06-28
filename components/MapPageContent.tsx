@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { MapHeader } from "./MapHeader";
 import { NearbyReportsSidebar } from "./NearbyReportsSidebar";
 import { InteractiveMap } from "./InteractiveMap";
-import { MobileControls } from "./MobileControls";
 import { ReportButton } from "./ReportButton";
 import { ReportModal } from "./ReportModal/ReportModal";
 import { useReports } from "../hooks/useReports";
@@ -44,11 +43,6 @@ export const MapPageContent = () => {
 
         <InteractiveMap reports={reports} />
       </div>
-
-      <MobileControls
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
-      />
 
       <ReportButton onClick={() => setIsReportModalOpen(true)} />
 
