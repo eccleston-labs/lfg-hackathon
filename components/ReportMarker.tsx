@@ -1,5 +1,7 @@
 import dynamic from "next/dynamic";
 import { Report } from "@/types";
+import { useState } from "react";
+import { createPortal } from 'react-dom';
 
 const Marker = dynamic(
   () => import("react-leaflet").then((mod) => mod.Marker),
@@ -30,6 +32,7 @@ interface ReportMarkerProps {
 }
 
 export const ReportMarker = ({ report }: ReportMarkerProps) => {
+  const [modalImage, setModalImage] = useState<string | null>(null);
   const coords = report.coordinates;
   if (!coords) return null;
 
@@ -75,7 +78,7 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
                       src={photo.file_path}
                       alt={`Report photo ${index + 1}`}
                       className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75"
-                      onClick={() => window.open(photo.file_path, "_blank")}
+                      onClick={() => report.photos && setModalImage(photo.file_path)}
                     />
                   ))}
                 </div>
@@ -100,6 +103,32 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
           </div>
         </div>
       </Popup>
+      {/* Modal */}
+      {modalImage && createPortal(
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.8)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          onClick={() => setModalImage(null)}
+        >
+          <img
+            src={modalImage}
+            alt="Report"
+            className="max-h-[80vh] max-w-[90vw] rounded shadow-lg"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      , document.body)}
     </Marker>
   );
 };
