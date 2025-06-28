@@ -2,6 +2,7 @@ import { FormEvent, ChangeEvent } from "react";
 import { ReportFormData, OSMPlace } from "@/types";
 import { ImageUpload } from "./ImageUpload";
 import { PlaceSearch } from "./PlaceSearch";
+import { useEffect, useRef } from "react";
 
 interface ReportFormProps {
   formData: ReportFormData;
@@ -13,6 +14,7 @@ interface ReportFormProps {
   onRemoveImage: (index: number) => void;
   isUploading: boolean;
   onFillTestData: () => void;
+  postcodeError?: string | null;
 }
 
 export const ReportForm = ({
@@ -25,7 +27,16 @@ export const ReportForm = ({
   onRemoveImage,
   isUploading,
   onFillTestData,
+  postcodeError,
 }: ReportFormProps) => {
+  const errorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (postcodeError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [postcodeError]);
+
   return (
     <form onSubmit={onSubmit} className="p-6 space-y-6">
       {/* Greyed out Text/Audio Toggle */}
@@ -69,6 +80,11 @@ export const ReportForm = ({
             placeholder="e.g. S10 5GG"
             required
           />
+          {postcodeError && (
+            <div 
+              ref={errorRef}
+              className="text-red-600 text-sm mb-2">{postcodeError}</div>
+          )}
         </div>
 
         {/* Address Details */}

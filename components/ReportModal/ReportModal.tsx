@@ -2,6 +2,7 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ReportFormData, OSMPlace } from "@/types";
 import { ReportForm } from "./ReportForm";
+import { useEffect, useRef } from "react";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const ReportModal = ({
 }: ReportModalProps) => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);  
   const [formData, setFormData] = useState<ReportFormData>({
     postcode: "",
     addressDetails: "",
@@ -28,7 +30,6 @@ export const ReportModal = ({
     hasWeapon: false,
     selectedPlace: undefined,
   });
-
   const supabase = createClient();
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -113,10 +114,52 @@ export const ReportModal = ({
     return uploadedUrls;
   };
 
+  // Postcode geocoding using postcodes.io API (same as map page)
+  const postcodeToCoordsPoint = async (
+    postcode: string
+  ): Promise<string | null> => {
+    if (!postcode) return null;
+
+    const normalized = postcode.toUpperCase().trim();
+
+    try {
+      console.log(`https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`)
+      const response = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(normalized)}`
+      );
+
+      if (!response.ok) {
+        console.warn(`Postcode API error for ${normalized}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.status === 200 && data.result) {
+        return `POINT(${data.result.latitude} ${data.result.longitude})`;
+      } else {
+        console.warn(`Invalid postcode: ${normalized}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error geocoding postcode ${normalized}:`, error);
+      return null;
+    }
+  };
+
   const handleSubmitReport = async (e: FormEvent) => {
     e.preventDefault();
 
     try {
+      // Validate postcode
+      const loc_gps = await postcodeToCoordsPoint(formData.postcode);
+      if (!loc_gps) {
+        setPostcodeError("Invalid postcode. Please enter a valid UK postcode.");
+        setIsUploading(false);
+        return;
+      }
+      setPostcodeError(null); // Clear error if valid
+
       setIsUploading(true);
 
       // Upload images first
@@ -129,6 +172,7 @@ export const ReportModal = ({
       const reportData = {
         raw_text: formData.whatHappened,
         postcode: formData.postcode,
+        location: loc_gps,
         location_hint:
           formData.addressDetails +
           (formData.selectedPlace
@@ -264,6 +308,7 @@ export const ReportModal = ({
           onRemoveImage={removeImage}
           isUploading={isUploading}
           onFillTestData={fillTestData}
+          postcodeError={postcodeError}
         />
       </div>
     </div>
