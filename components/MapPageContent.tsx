@@ -43,14 +43,14 @@ export const MapPageContent = () => {
           />
         )}
 
-        <InteractiveMap reports={reports} />
+        <InteractiveMap reports={reports} onMapBoundsChange={setMapBounds} />
       </div>
 
       {/* Floating Sidebar Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className={`fixed top-20 z-5000 z-[1000] bg-white text-black p-3 rounded-lg border-2 border-gray-300 hover:bg-gray-100 shadow-lg ${
-          isSidebarOpen ? 'left-[336px]' : 'left-4'
+          isSidebarOpen ? "left-[336px]" : "left-4"
         }`}
       >
         <svg

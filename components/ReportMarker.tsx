@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { Report } from "@/types";
 import { useState } from "react";
-import { createPortal } from 'react-dom';
+import { createPortal } from "react-dom";
 
 const Marker = dynamic(
   () => import("react-leaflet").then((mod) => mod.Marker),
@@ -45,6 +45,17 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
           <div className="font-bold text-lg mb-2 capitalize">
             {report.crime_type || "Crime Report"}
           </div>
+
+          {/* AI Summary */}
+          {report.ai_summary && (
+            <div className="text-sm text-blue-700 font-medium mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
+              <div className="flex items-start gap-2">
+                <span className="text-blue-500 text-xs">🤖</span>
+                <span className="italic">{report.ai_summary}</span>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2 text-sm">
             <div>
               <span className="font-semibold">Location:</span> {report.postcode}
@@ -78,7 +89,9 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
                       src={photo.file_path}
                       alt={`Report photo ${index + 1}`}
                       className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75"
-                      onClick={() => report.photos && setModalImage(photo.file_path)}
+                      onClick={() =>
+                        report.photos && setModalImage(photo.file_path)
+                      }
                     />
                   ))}
                 </div>
@@ -104,31 +117,33 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
         </div>
       </Popup>
       {/* Modal */}
-      {modalImage && createPortal(
-        <div
-          style={{
-            position: "fixed",
-            left: 0,
-            top: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.8)",
-            zIndex: 99999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-          onClick={() => setModalImage(null)}
-        >
-          <img
-            src={modalImage}
-            alt="Report"
-            className="max-h-[80vh] max-w-[90vw] rounded shadow-lg"
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
-      , document.body)}
+      {modalImage &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.8)",
+              zIndex: 99999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setModalImage(null)}
+          >
+            <img
+              src={modalImage}
+              alt="Report"
+              className="max-h-[80vh] max-w-[90vw] rounded shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body
+        )}
     </Marker>
   );
 };
