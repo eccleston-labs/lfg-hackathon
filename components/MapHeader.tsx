@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export const MapHeader = () => {
+interface MapHeaderProps {
+  activePage?: "map" | "dashboard";
+}
+
+export const MapHeader = ({ activePage = "map" }: MapHeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -12,15 +16,30 @@ export const MapHeader = () => {
       
       {/* Desktop Navigation */}
       <div className="hidden lg:flex gap-6">
-        <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
-          Map
-        </span>
-        <Link
-          href="/dashboard"
-          className="text-gray-700 hover:text-gray-900 font-medium"
-        >
-          Dashboard
-        </Link>
+        {activePage === "map" ? (
+          <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
+            Map
+          </span>
+        ) : (
+          <Link
+            href="/map"
+            className="text-gray-700 hover:text-gray-900 font-medium"
+          >
+            Map
+          </Link>
+        )}
+        {activePage === "dashboard" ? (
+          <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
+            Dashboard
+          </span>
+        ) : (
+          <Link
+            href="/dashboard"
+            className="text-gray-700 hover:text-gray-900 font-medium"
+          >
+            Dashboard
+          </Link>
+        )}
       </div>
 
       {/* Mobile Hamburger Menu */}
@@ -47,16 +66,32 @@ export const MapHeader = () => {
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
           <div className="absolute top-full right-6 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-[120px] z-50">
-            <span className="block px-4 py-2 text-gray-900 font-medium border-l-2 border-gray-900 bg-gray-50">
-              Map
-            </span>
-            <Link
-              href="/dashboard"
-              className="block px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Dashboard
-            </Link>
+            {activePage === "map" ? (
+              <span className="block px-4 py-2 text-gray-900 font-medium border-l-2 border-gray-900 bg-gray-50">
+                Map
+              </span>
+            ) : (
+              <Link
+                href="/map"
+                className="block px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Map
+              </Link>
+            )}
+            {activePage === "dashboard" ? (
+              <span className="block px-4 py-2 text-gray-900 font-medium border-l-2 border-gray-900 bg-gray-50">
+                Dashboard
+              </span>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="block px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
           </div>
         )}
       </div>
