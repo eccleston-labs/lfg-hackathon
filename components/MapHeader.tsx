@@ -9,7 +9,7 @@ export const MapHeader = ({ activePage = "map" }: MapHeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-[1000] relative">
+    <header className="bg-gray-100 border-b border-gray-200 px-6 py-4 flex justify-between items-center z-[1000] relative">
       <Link href="/" className="hover:opacity-80 transition-opacity">
         <div className="flex items-center gap-2">
           <svg
