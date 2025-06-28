@@ -148,7 +148,9 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">ProtectOurStreets</h1>
+        <Link href="/">
+          <h1 className="text-2xl font-bold text-gray-900">OpenCrimeReports</h1>
+        </Link>
         <div className="flex gap-6">
           <Link
             href="/map"

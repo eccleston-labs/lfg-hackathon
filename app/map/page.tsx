@@ -147,21 +147,26 @@ function MapPageContent() {
 
   // Get map center from URL parameters or default to London
   const getMapCenter = (): [number, number] => {
-    const lat = searchParams.get('lat');
-    const lng = searchParams.get('lng');
-    
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+
     if (lat && lng) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lng);
-      
+
       // Validate coordinates are reasonable (within world bounds)
-      if (!isNaN(latitude) && !isNaN(longitude) && 
-          latitude >= -90 && latitude <= 90 && 
-          longitude >= -180 && longitude <= 180) {
+      if (
+        !isNaN(latitude) &&
+        !isNaN(longitude) &&
+        latitude >= -90 &&
+        latitude <= 90 &&
+        longitude >= -180 &&
+        longitude <= 180
+      ) {
         return [latitude, longitude];
       }
     }
-    
+
     // Default to London coordinates
     return [51.505, -0.09];
   };
@@ -451,7 +456,9 @@ function MapPageContent() {
     <main className="relative h-screen w-full flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex justify-between items-center z-[1000]">
-        <h1 className="text-2xl font-bold text-gray-900">ProtectOurStreets</h1>
+        <Link href="/">
+          <h1 className="text-2xl font-bold text-gray-900">OpenCrimeReports</h1>
+        </Link>
         <div className="flex gap-6">
           <span className="text-gray-900 font-medium border-b-2 border-gray-900 pb-1">
             Map
@@ -948,12 +955,14 @@ function MapPageContent() {
 
 export default function MapPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
-        <span className="ml-2">Loading map...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+          <span className="ml-2">Loading map...</span>
+        </div>
+      }
+    >
       <MapPageContent />
     </Suspense>
   );
