@@ -35,7 +35,7 @@ export const MapHeader = ({
             </svg>
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
               <span className="hidden sm:inline">OpenCrimeReports</span>
-              <span className="sm:hidden">OCR</span>
+              <span className="sm:hidden">OpenCrimeReports</span>
             </h1>
           </div>
         </Link>
