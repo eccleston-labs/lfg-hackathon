@@ -86,17 +86,6 @@ export default function ReportForm({
         </button>
         <button
           type="button"
-          onClick={() => handleInputModeChange("text")}
-          className={`pb-2 px-1 border-b-2 font-medium ${
-            inputMode === "text"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-400"
-          }`}
-        >
-          Text
-        </button>
-        <button
-          type="button"
           onClick={() => handleInputModeChange("manual")}
           className={`pb-2 px-1 border-b-2 font-medium ${
             inputMode === "manual"
