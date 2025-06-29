@@ -22,6 +22,8 @@ export const ReportModal = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [parsedData, setParsedData] = useState<any | null>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [textParsedData, setTextParsedData] = useState<any | null>(null);
+  const [isParsingText, setIsParsingText] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ReportFormData>({
@@ -107,6 +109,43 @@ export const ReportModal = ({
         error instanceof Error
           ? error.message
           : "Failed to process audio. Please try again."
+      );
+    }
+  };
+
+  const handleAutoParseText = async (text: string) => {
+    try {
+      setIsParsingText(true);
+
+      const parseResponse = await fetch("/api/parse-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript: text }),
+      });
+
+      if (!parseResponse.ok) {
+        throw new Error(`Parsing failed: ${parseResponse.status}`);
+      }
+
+      const parseResult = await parseResponse.json();
+
+      if (!parseResult.success) {
+        throw new Error(parseResult.error || "Parsing failed");
+      }
+
+      setTextParsedData(parseResult.extractedFields);
+      setIsParsingText(false);
+    } catch (error) {
+      console.error("Text parsing error:", error);
+      setIsParsingText(false);
+
+      // Show user-friendly error
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process text. Please try again."
       );
     }
   };
@@ -246,6 +285,7 @@ export const ReportModal = ({
           setIsUploading(false);
           return;
         }
+        // Note: Text parsing is now entirely manual via the "Extract Details" button
       } else if (formData.inputMode === "manual") {
         // Manual/detailed mode - needs full validation
         if (!formData.whatHappened.trim()) {
@@ -285,8 +325,25 @@ export const ReportModal = ({
       let loc_gps: string | null = null;
 
       if (formData.inputMode === "text") {
-        // Simple text mode - use default Sheffield location
-        loc_gps = "POINT(53.3811 -1.4701)"; // Sheffield city center
+        // Text mode - try to extract from parsed data or use default
+        if (textParsedData?.location) {
+          // Try to extract a postcode from the location string
+          const postcodeMatch = textParsedData.location.match(
+            /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i
+          );
+          if (postcodeMatch) {
+            loc_gps = await postcodeToCoordsPoint(postcodeMatch[0]);
+          }
+
+          // If no postcode found or geocoding failed, use a default Sheffield location
+          if (!loc_gps) {
+            console.log("Using default Sheffield location for text report");
+            loc_gps = "POINT(53.3811 -1.4701)"; // Sheffield city center
+          }
+        } else {
+          // Fallback to Sheffield if no location parsed
+          loc_gps = "POINT(53.3811 -1.4701)";
+        }
       } else if (formData.inputMode === "manual") {
         // Manual mode - use provided postcode
         loc_gps = await postcodeToCoordsPoint(formData.postcode);
@@ -327,7 +384,9 @@ export const ReportModal = ({
               "Audio report - see location_hint for details",
         postcode:
           formData.inputMode === "text"
-            ? "TEXT" // Simple text mode doesn't have postcode
+            ? textParsedData?.location?.match(
+                /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i
+              )?.[0] || "TEXT"
             : formData.inputMode === "manual"
             ? formData.postcode
             : parsedData?.location?.match(
@@ -336,29 +395,40 @@ export const ReportModal = ({
         location: loc_gps,
         location_hint:
           formData.inputMode === "text"
-            ? "" // Simple text mode has no location details
+            ? textParsedData?.location || ""
             : formData.inputMode === "manual"
             ? formData.addressDetails +
               (formData.selectedPlace
                 ? ` | Selected place: ${formData.selectedPlace.display_name}`
                 : "")
             : parsedData?.location || "",
-        incident_date: null, // We could parse this from time_description in the future
+        incident_date:
+          formData.inputMode === "text"
+            ? textParsedData?.incidentDate || null
+            : formData.inputMode === "manual"
+            ? null // Manual reports don't have AI date parsing
+            : parsedData?.incidentDate || null,
         time_description:
           formData.inputMode === "text"
-            ? "" // Simple text mode has no time details
+            ? textParsedData?.timeOfIncident || ""
             : formData.inputMode === "manual"
             ? formData.whenHappened
             : parsedData?.timeOfIncident || "",
         time_known:
           formData.inputMode === "text"
-            ? false // Simple text mode doesn't capture time
+            ? Boolean(textParsedData?.timeOfIncident)
             : formData.inputMode === "manual"
             ? Boolean(formData.whenHappened.trim())
             : Boolean(parsedData?.timeOfIncident),
         people_description:
           formData.inputMode === "text"
-            ? "" // Simple text mode has no people details
+            ? [
+                textParsedData?.peopleInvolved,
+                textParsedData?.appearance,
+                textParsedData?.contactInfo,
+              ]
+                .filter(Boolean)
+                .join(" | ")
             : formData.inputMode === "manual"
             ? [
                 formData.peopleDetails,
@@ -376,35 +446,40 @@ export const ReportModal = ({
                 .join(" | "),
         people_names:
           formData.inputMode === "text"
-            ? ""
+            ? textParsedData?.peopleInvolved || ""
             : formData.inputMode === "manual"
             ? formData.peopleDetails
             : parsedData?.peopleInvolved || "",
         people_appearance:
           formData.inputMode === "text"
-            ? ""
+            ? textParsedData?.appearance || ""
             : formData.inputMode === "manual"
             ? formData.peopleAppearance
             : parsedData?.appearance || "",
         people_contact_info:
           formData.inputMode === "text"
-            ? ""
+            ? textParsedData?.contactInfo || ""
             : formData.inputMode === "manual"
             ? formData.contactDetails
             : parsedData?.contactInfo || "",
         has_vehicle:
           formData.inputMode === "text"
-            ? false
+            ? textParsedData?.hasVehicle || false
             : formData.inputMode === "manual"
             ? formData.hasVehicle
             : parsedData?.hasVehicle || false,
         has_weapon:
           formData.inputMode === "text"
-            ? false
+            ? textParsedData?.hasWeapon || false
             : formData.inputMode === "manual"
             ? formData.hasWeapon
             : parsedData?.hasWeapon || false,
-        crime_type: "theft",
+        crime_type:
+          formData.inputMode === "text"
+            ? textParsedData?.crimeType || "Other"
+            : formData.inputMode === "manual"
+            ? "Other" // Manual reports don't have AI classification yet
+            : parsedData?.crimeType || "Other",
         is_anonymous: true,
         shared_with_crimestoppers: formData.submitToCrimeStoppers,
         status: "submitted",
@@ -503,6 +578,7 @@ export const ReportModal = ({
       setAudioBlob(null);
       setTranscript(null);
       setParsedData(null);
+      setTextParsedData(null);
 
       // Reload reports to show the new one
       onReportSubmitted();
@@ -571,6 +647,9 @@ export const ReportModal = ({
           isTranscribing={isTranscribing}
           parsedData={parsedData}
           isParsing={isParsing}
+          textParsedData={textParsedData}
+          isParsingText={isParsingText}
+          onParseText={handleAutoParseText}
           isUploading={isUploading}
           onFillTestData={fillTestData}
           postcodeError={postcodeError}

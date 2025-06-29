@@ -110,7 +110,8 @@ export const useReports = () => {
       const reportWithCoords: Report = {
         ...newReport,
         coordinates,
-        photos: [], // New reports start with no photos
+        // Keep photos from the new report (should include fetched photos from realtime)
+        photos: newReport.photos || [],
       };
 
       console.log("Adding real-time report:", reportWithCoords);
@@ -122,10 +123,20 @@ export const useReports = () => {
     }
   }, []);
 
+  const updateReportPhotos = useCallback((reportId: string, photos: any[]) => {
+    setReports((prevReports) =>
+      prevReports.map((report) =>
+        report.id === reportId ? { ...report, photos } : report
+      )
+    );
+    console.log(`Updated photos for report ${reportId}:`, photos);
+  }, []);
+
   return {
     reports,
     isLoadingReports,
     loadReports,
     addReport,
+    updateReportPhotos,
   };
 };

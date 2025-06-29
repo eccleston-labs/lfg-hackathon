@@ -11,12 +11,14 @@ import SimpleTextReportForm from "../SimpleTextReportForm";
 interface ParsedFields {
   location?: string;
   timeOfIncident?: string;
+  incidentDate?: string;
   description?: string;
   peopleInvolved?: string;
   appearance?: string;
   contactInfo?: string;
   hasVehicle?: boolean;
   hasWeapon?: boolean;
+  crimeType?: string;
 }
 
 interface ReportFormProps {
@@ -32,6 +34,9 @@ interface ReportFormProps {
   isTranscribing: boolean;
   parsedData: ParsedFields | null;
   isParsing: boolean;
+  textParsedData: ParsedFields | null;
+  isParsingText: boolean;
+  onParseText: (text: string) => void;
   isUploading: boolean;
   onFillTestData: () => void;
   postcodeError?: string | null;
@@ -50,6 +55,9 @@ export default function ReportForm({
   isTranscribing,
   parsedData,
   isParsing,
+  textParsedData,
+  isParsingText,
+  onParseText,
   isUploading,
   onFillTestData,
   postcodeError,
@@ -107,6 +115,9 @@ export default function ReportForm({
           onInputChange={onInputChange}
           onSubmit={onSubmit}
           isUploading={isUploading}
+          textParsedData={textParsedData}
+          isParsingText={isParsingText}
+          onParseText={onParseText}
         />
       ) : inputMode === "audio" ? (
         <AudioReportForm
