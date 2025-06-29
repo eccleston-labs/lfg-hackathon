@@ -1,5 +1,6 @@
-import { FormEvent } from "react";
+import { FormEvent, ChangeEvent } from "react";
 import { ReportFormData } from "@/types";
+import { ImageUpload } from "./ReportModal/ImageUpload";
 
 interface ParsedFields {
   location?: string;
@@ -22,6 +23,9 @@ interface SimpleTextReportFormProps {
   textParsedData: ParsedFields | null;
   isParsingText: boolean;
   onParseText: (text: string) => void;
+  selectedImages: File[];
+  onImageSelect: (event: ChangeEvent<HTMLInputElement>) => void;
+  onRemoveImage: (index: number) => void;
 }
 
 export default function SimpleTextReportForm({
@@ -32,6 +36,9 @@ export default function SimpleTextReportForm({
   textParsedData,
   isParsingText,
   onParseText,
+  selectedImages,
+  onImageSelect,
+  onRemoveImage,
 }: SimpleTextReportFormProps) {
   return (
     <form onSubmit={onSubmit} className="p-6 space-y-6">
@@ -254,6 +261,15 @@ export default function SimpleTextReportForm({
           </div>
         </div>
       )}
+
+      {/* Attach Photos */}
+      <div>
+        <ImageUpload
+          selectedImages={selectedImages}
+          onImageSelect={onImageSelect}
+          onRemoveImage={onRemoveImage}
+        />
+      </div>
 
       {/* CrimeStoppers Checkbox */}
       <div className="flex items-start space-x-3">

@@ -118,6 +118,9 @@ export default function ReportForm({
           textParsedData={textParsedData}
           isParsingText={isParsingText}
           onParseText={onParseText}
+          selectedImages={selectedImages}
+          onImageSelect={onImageSelect}
+          onRemoveImage={onRemoveImage}
         />
       ) : inputMode === "audio" ? (
         <AudioReportForm
@@ -130,6 +133,9 @@ export default function ReportForm({
           isParsing={isParsing}
           formData={formData}
           onInputChange={onInputChange}
+          selectedImages={selectedImages}
+          onImageSelect={onImageSelect}
+          onRemoveImage={onRemoveImage}
         />
       ) : (
         <TextReportForm
