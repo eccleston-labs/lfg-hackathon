@@ -125,14 +125,14 @@ export default function SyntheticDataPage() {
       //  coordinates: [Math.random() * 360 - 180, Math.random() * 180 - 90], // Random coordinates
       //}, //todo
       crime_type: generateSyntheticCrimeType(i),
-      location_hint: "bar", //todo text
-      postcode: "SW1A 1AA", //todo text
+      location_hint: "", //todo text
+      postcode: "", //todo text
       time_known: false, //todo bool
-      time_description: "rough hour", //todo text
-      people_description: "unknown", //todo text
+      time_description: generateSyntheticIncidentDate(i).toTimeString(),
+      people_description: "", //todo text
       people_names: generateSyntheticName(i),
-      people_appearance: "unknown", //todo text
-      people_contact_info: "unknown", //todo text
+      people_appearance: "", //todo text
+      people_contact_info: "", //todo text
       has_vehicle: false, //todo bool
       has_weapon: false, //todo bool
       user_id: "f4b8320a-0fad-428a-abd5-9e885817551d", //synthetic@robadob.org
