@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface MapHeaderProps {
   activePage?: "map" | "dashboard";
 }
 
 export const MapHeader = ({ activePage = "map" }: MapHeaderProps) => {
+  const searchParams = useSearchParams();  
+  const syntheticFilter = searchParams.has("synthetic");
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-[1000] relative">
       <Link href="/" className="hover:opacity-80 transition-opacity">
@@ -23,7 +26,7 @@ export const MapHeader = ({ activePage = "map" }: MapHeaderProps) => {
       {/* Simplified Navigation */}
       <div className="flex gap-1">
         <Link
-          href="/map"
+          href={`/map${syntheticFilter?"?synthetic":""}`}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activePage === "map"
               ? "text-gray-900 underline underline-offset-4"
@@ -33,7 +36,7 @@ export const MapHeader = ({ activePage = "map" }: MapHeaderProps) => {
           Map
         </Link>
         <Link
-          href="/dashboard"
+          href={`/dashboard${syntheticFilter?"?synthetic":""}`}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activePage === "dashboard"
               ? "text-gray-900 underline underline-offset-4"
