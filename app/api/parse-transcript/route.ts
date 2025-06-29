@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,12 +14,14 @@ interface ParsedReportData {
   extractedFields: {
     location?: string;
     timeOfIncident?: string;
+    incidentDate?: string;
     description?: string;
     peopleInvolved?: string;
     appearance?: string;
     contactInfo?: string;
     hasVehicle?: boolean;
     hasWeapon?: boolean;
+    crimeType?: string;
   };
   confidence?: number;
   rawTranscript: string;
@@ -29,15 +31,18 @@ interface ParsedReportData {
 export async function POST(request: NextRequest) {
   try {
     const body: ParseRequest = await request.json();
-    
+
     if (!body.transcript || !body.transcript.trim()) {
       return NextResponse.json(
-        { success: false, error: 'Transcript is required' },
+        { success: false, error: "Transcript is required" },
         { status: 400 }
       );
     }
 
-    console.log('Parsing transcript:', body.transcript.substring(0, 100) + '...');
+    console.log(
+      "Parsing transcript:",
+      body.transcript.substring(0, 100) + "..."
+    );
 
     const prompt = `Parse this crime report transcript and extract structured information:
 
@@ -46,95 +51,124 @@ export async function POST(request: NextRequest) {
 Extract the following information if mentioned in the transcript:
 - LOCATION: Where did this happen? (address, postcode, area, landmarks, street names)
 - TIME: When did this happen? (date, time, timeframe like "yesterday", "this morning")
+- INCIDENT_DATE: Try to determine the actual date/time of the incident. If specific dates/times are mentioned, convert to ISO format. If relative times like "yesterday", "last week", calculate from today. Return null if too vague.
 - DESCRIPTION: What happened? (main incident description, what crime occurred)
 - PEOPLE: Who was involved? (names, ages, relationships, "the suspect", "a man", etc.)
 - APPEARANCE: Physical descriptions of people (height, clothing, hair, age, gender)
 - CONTACT: Phone numbers, social media accounts, email addresses, or other contact details mentioned
 - VEHICLE: Any mention of cars, bikes, motorcycles, etc. (respond with true/false)
 - WEAPON: Any mention of weapons, knives, guns, etc. (respond with true/false)
+- CRIME_TYPE: Classify the crime type based on the description. Choose the MOST APPROPRIATE option from this comprehensive list:
+  * "Theft" (shoplifting, pickpocketing, stealing items)
+  * "Burglary" (breaking into buildings/homes)
+  * "Robbery" (theft with force/threat)
+  * "Vehicle Crime" (car theft, vandalism to vehicles, break-ins)
+  * "Vandalism" (graffiti, property damage, destruction)
+  * "Assault" (physical violence, fighting)
+  * "Anti-social Behaviour" (noise, harassment, public disturbance)
+  * "Drug-related" (drug dealing, drug use, drug paraphernalia)
+  * "Fraud" (scams, identity theft, financial fraud)
+  * "Cyber Crime" (online scams, hacking, computer misuse)
+  * "Public Order" (drunk and disorderly, public intoxication)
+  * "Sexual Offences" (harassment, inappropriate behavior)
+  * "Weapon Offences" (knife crime, illegal weapons)
+  * "Domestic Violence" (domestic abuse, family violence)
+  * "Hate Crime" (discrimination, hate speech, targeted harassment)
+  * "Environmental Crime" (fly-tipping, pollution, waste dumping)
+  * "Wildlife Crime" (animal cruelty, illegal hunting, wildlife trafficking)
+  * "Traffic Offences" (dangerous driving, hit and run, traffic violations)
+  * "Other"
 
 Important rules:
 - Only extract information that is explicitly mentioned in the transcript
 - If information isn't clear or mentioned, mark that field as null
 - For VEHICLE and WEAPON, respond with true only if explicitly mentioned
-- Keep original wording where possible
+- For CRIME_TYPE, analyze the incident description and choose the most fitting category
+- If no category fits perfectly, use "Other"
+- For LOCATION, prioritize UK postcodes, street names, landmarks, business names
+- For INCIDENT_DATE, convert relative times: "yesterday" = subtract 1 day from current date, "last week" = subtract 7 days, etc.
+- For PEOPLE/APPEARANCE, capture ages, clothing, physical descriptions, behavior
+- Keep original wording where possible but be comprehensive
 - If multiple people are mentioned, include all relevant details
+- Extract contact details even if partial (usernames, partial phone numbers, etc.)
 
 Respond with valid JSON in exactly this format:
 {
   "location": "extracted location or null",
-  "timeOfIncident": "extracted time or null", 
+  "timeOfIncident": "extracted time description or null", 
+  "incidentDate": "ISO date/time string or null",
   "description": "extracted description or null",
   "peopleInvolved": "extracted people details or null",
   "appearance": "extracted appearance details or null", 
   "contactInfo": "extracted contact info or null",
   "hasVehicle": false,
-  "hasWeapon": false
+  "hasWeapon": false,
+  "crimeType": "selected crime type from the list"
 }`;
 
     // Send to OpenAI GPT-4o-mini
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: "gpt-4o-mini",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert at extracting structured information from crime reports. Always respond with valid JSON only, no additional text.'
+          role: "system",
+          content:
+            "You are an expert UK police analyst specializing in extracting structured information from public crime reports. You understand UK geography, postcodes, time expressions, and crime categories. Extract maximum relevant detail while being accurate. Always respond with valid JSON only, no additional text.",
         },
         {
-          role: 'user', 
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
       temperature: 0.1, // Low temperature for consistent extraction
       max_tokens: 1000,
     });
 
     const responseText = completion.choices[0]?.message?.content;
-    
+
     if (!responseText) {
-      throw new Error('No response from OpenAI');
+      throw new Error("No response from OpenAI");
     }
 
-    console.log('Raw OpenAI response:', responseText);
+    console.log("Raw OpenAI response:", responseText);
 
     // Parse JSON response
     let extractedFields;
     try {
       extractedFields = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('Failed to parse OpenAI JSON response:', parseError);
-      throw new Error('Invalid JSON response from AI parser');
+      console.error("Failed to parse OpenAI JSON response:", parseError);
+      throw new Error("Invalid JSON response from AI parser");
     }
 
-    console.log('Parsed fields:', extractedFields);
+    console.log("Parsed fields:", extractedFields);
 
     const result: ParsedReportData = {
       success: true,
       extractedFields,
       rawTranscript: body.transcript,
-      processingNotes: [`Processed with GPT-4o-mini`]
+      processingNotes: [`Processed with GPT-4o-mini`],
     };
 
     return NextResponse.json(result);
-
   } catch (error) {
-    console.error('Parsing error:', error);
-    
+    console.error("Parsing error:", error);
+
     if (error instanceof Error) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Parsing failed',
-          details: error.message 
+        {
+          success: false,
+          error: "Parsing failed",
+          details: error.message,
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Unknown parsing error' 
+      {
+        success: false,
+        error: "Unknown parsing error",
       },
       { status: 500 }
     );
@@ -144,9 +178,9 @@ Respond with valid JSON in exactly this format:
 // Health check endpoint
 export async function GET() {
   return NextResponse.json({
-    status: 'ok',
-    endpoint: 'parse-transcript',
-    model: 'gpt-4o-mini',
+    status: "ok",
+    endpoint: "parse-transcript",
+    model: "gpt-4o-mini",
     openai_configured: !!process.env.OPENAI_API_KEY,
   });
-} 
+}
