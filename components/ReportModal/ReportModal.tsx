@@ -35,7 +35,7 @@ export const ReportModal = ({
     hasVehicle: false,
     hasWeapon: false,
     selectedPlace: undefined,
-    inputMode: "text",
+    inputMode: "audio",
     submitToCrimeStoppers: true,
   });
   const supabase = createClient();
@@ -496,7 +496,7 @@ export const ReportModal = ({
         hasVehicle: false,
         hasWeapon: false,
         selectedPlace: undefined,
-        inputMode: "text",
+        inputMode: "audio",
         submitToCrimeStoppers: true,
       });
       setSelectedImages([]);
@@ -536,7 +536,7 @@ export const ReportModal = ({
         category: "amenity",
         importance: 0.8,
       },
-      inputMode: "manual",
+      inputMode: "audio",
       submitToCrimeStoppers: true,
     });
   };

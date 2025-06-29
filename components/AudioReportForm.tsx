@@ -67,10 +67,82 @@ export default function AudioReportForm({
             Audio Crime Report
           </h3>
 
-          <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-            Record your voice to describe what happened. Your audio will be
-            automatically processed using AI to extract relevant details.
-          </p>
+          <div className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="mb-4 font-medium">
+              Please provide context on the following:
+            </p>
+
+            <div className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <strong className="text-blue-800">
+                    📍 Location (Vital):
+                  </strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Town, city, or postcode
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">
+                    ⏰ When it happened:
+                  </strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Date and time if known
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">📝 What happened:</strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Describe the incident
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">👥 People involved:</strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Names, ages, addresses
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">👁️ Appearance:</strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Physical description
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">📞 Contact details:</strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Phone, social media, etc.
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">
+                    🚗 Vehicle involved:
+                  </strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Yes/No and details
+                  </div>
+                </div>
+
+                <div>
+                  <strong className="text-blue-800">⚠️ Weapon involved:</strong>
+                  <div className="text-blue-700 text-xs mt-1">
+                    Yes/No and details
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-gray-500">
+              Your audio will be automatically processed using AI to extract
+              these details.
+            </p>
+          </div>
         </div>
       </div>
 
