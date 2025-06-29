@@ -6,14 +6,12 @@ import { ImageUpload } from "./ReportModal/ImageUpload";
 interface ParsedFields {
   location?: string;
   timeOfIncident?: string;
-  incidentDate?: string;
   description?: string;
   peopleInvolved?: string;
   appearance?: string;
   contactInfo?: string;
   hasVehicle?: boolean;
   hasWeapon?: boolean;
-  crimeType?: string;
 }
 
 interface AudioReportFormProps {
@@ -123,15 +121,6 @@ export default function AudioReportForm({
           </div>
 
           <div className="space-y-3 text-sm">
-            {parsedData.crimeType && (
-              <div>
-                <span className="font-medium text-green-800">Crime Type:</span>
-                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                  {parsedData.crimeType}
-                </span>
-              </div>
-            )}
-
             {parsedData.location && (
               <div>
                 <span className="font-medium text-green-800">Location:</span>
@@ -146,15 +135,6 @@ export default function AudioReportForm({
                 <span className="font-medium text-green-800">Time:</span>
                 <span className="ml-2 text-green-700">
                   {parsedData.timeOfIncident}
-                </span>
-              </div>
-            )}
-
-            {parsedData.incidentDate && (
-              <div>
-                <span className="font-medium text-green-800">Exact Date:</span>
-                <span className="ml-2 text-green-700">
-                  {new Date(parsedData.incidentDate).toLocaleString("en-GB")}
                 </span>
               </div>
             )}

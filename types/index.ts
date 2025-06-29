@@ -1,28 +1,19 @@
 export interface Report {
   id: string;
   created_at: string;
-  incident_date?: string; // ISO date string
   raw_text: string;
-  is_anonymous: boolean;
-  shared_with_crimestoppers: boolean;
-  status: string;
-  location: string; // WKB format from database
-  crime_type: string;
-  location_hint: string;
   postcode: string;
-  time_known: boolean;
+  location: string; // WKB format from database
+  location_hint: string;
   time_description: string;
-  people_description: string;
-  people_names: string;
-  people_appearance: string;
-  people_contact_info: string;
+  crime_type: string;
+  status: string;
+  people_appearance?: string;
   has_vehicle: boolean;
   has_weapon: boolean;
-  user_id: string;
-  ai_summary?: string;
-  // Additional computed fields for UI
   coordinates?: [number, number];
   photos?: { id: string; file_path: string }[];
+  ai_summary?: string;
 }
 
 export interface MapBounds {

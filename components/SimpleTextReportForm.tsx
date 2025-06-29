@@ -303,48 +303,17 @@ export default function SimpleTextReportForm({
       <button
         type="submit"
         disabled={isUploading || !formData.whatHappened.trim()}
-        className={`w-full font-bold text-lg py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-          textParsedData
-            ? "bg-green-600 hover:bg-green-700 text-white"
-            : "bg-gray-900 hover:bg-gray-800 text-white"
-        }`}
+        className="w-full bg-gray-900 text-white font-bold text-lg py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isUploading ? (
           <div className="flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
             Submitting report...
           </div>
-        ) : textParsedData ? (
-          <div className="flex items-center justify-center gap-2">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            Submit Report (Details Extracted)
-          </div>
         ) : (
-          "Submit Report (Basic Text Only)"
+          "Submit Report"
         )}
       </button>
-
-      {/* Helpful Note */}
-      {!textParsedData && formData.whatHappened.trim() && !isParsingText && (
-        <div className="text-center">
-          <p className="text-sm text-gray-500">
-            💡 <strong>Tip:</strong> Extract details first for better location
-            mapping and report categorization
-          </p>
-        </div>
-      )}
     </form>
   );
 }
