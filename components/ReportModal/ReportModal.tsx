@@ -272,7 +272,7 @@ export const ReportModal = ({
           return;
         }
 
-        if (!parsedData.location && !parsedData.description) {
+        if (!parsedData.location && !parsedData.description && !parsedData.postcode) {
           toast.error(
             "Could not extract location information from your audio. Please try recording again with more location details."
           );
@@ -292,7 +292,15 @@ export const ReportModal = ({
         loc_gps = await postcodeToCoordsPoint(formData.postcode);
       } else {
         // Audio mode - try to extract from parsed data or use default
-        if (parsedData?.location) {
+        
+        if (parsedData?.postcode) {
+            loc_gps = await postcodeToCoordsPoint(parsedData?.postcode);
+          // If no postcode found or geocoding failed, use a default Sheffield location
+          if (!loc_gps) {
+            console.log("Using default Sheffield location for text report");
+            loc_gps = "POINT(53.3811 -1.4701)"; // Sheffield city center
+          }
+        } else if (parsedData?.location) {
           // Try to extract a postcode from the location string
           const postcodeMatch = parsedData.location.match(
             /[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}/i

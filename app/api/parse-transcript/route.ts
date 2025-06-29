@@ -52,6 +52,7 @@ Extract the following information if mentioned in the transcript:
 - CONTACT: Phone numbers, social media accounts, email addresses, or other contact details mentioned
 - VEHICLE: Any mention of cars, bikes, motorcycles, etc. (respond with true/false)
 - WEAPON: Any mention of weapons, knives, guns, etc. (respond with true/false)
+- POSTCODE: Calculate the postcode based on the location information provided
 
 Important rules:
 - Only extract information that is explicitly mentioned in the transcript
@@ -68,8 +69,7 @@ Respond with valid JSON in exactly this format:
   "peopleInvolved": "extracted people details or null",
   "appearance": "extracted appearance details or null", 
   "contactInfo": "extracted contact info or null",
-  "hasVehicle": false,
-  "hasWeapon": false
+  "postcode": "calculated postcode"
 }`;
 
     // Send to OpenAI GPT-4o-mini
