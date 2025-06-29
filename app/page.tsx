@@ -170,7 +170,7 @@ export default function Home() {
                         onChange={(e) => setPostcodeInput(e.target.value)}
                         onKeyPress={handlePostcodeKeyPress}
                         placeholder="Enter a UK postcode (e.g. SW1A 1AA)"
-                        className="w-full px-4 py-3 sm:py-3.5 text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all bg-white"
+                        className="w-full px-4 py-3 sm:py-3.5 text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all bg-white text-black"
                       />
                       {postcodeError && (
                         <p className="mt-2 text-sm text-red-600">
