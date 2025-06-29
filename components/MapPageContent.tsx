@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { MapHeader } from "./MapHeader";
 import { NearbyReportsSidebar } from "./NearbyReportsSidebar";
 import { InteractiveMap } from "./InteractiveMap";
@@ -21,7 +22,7 @@ export const MapPageContent = () => {
     addReport,
     updateReportPhotos,
   } = useReports();
-  
+  const searchParams = useSearchParams();  
   const syntheticFilter = searchParams.has("synthetic");
   
   const filteredReports = !syntheticFilter
