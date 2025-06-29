@@ -49,33 +49,31 @@ export default function AudioReportForm({
 
   return (
     <form onSubmit={onSubmit} className="p-6 space-y-6">
-      <div className="text-center mb-6">
-        <div className="mb-4">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+      <div className="text-center mb-8">
+        <div className="mb-6">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
             <svg
-              className="w-8 h-8 text-blue-600"
-              fill="none"
-              stroke="currentColor"
+              className="w-10 h-10 text-white"
+              fill="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-              />
+              <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" />
+              <path d="M19 10v1a7 7 0 0 1-14 0v-1a1 1 0 0 1 2 0v1a5 5 0 0 0 10 0v-1a1 1 0 1 1 2 0Z" />
+              <path d="M12 18.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1Z" />
             </svg>
           </div>
         </div>
 
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Audio Crime Report
-        </h3>
+        <div className="space-y-3">
+          <h3 className="text-2xl font-bold text-gray-900">
+            Audio Crime Report
+          </h3>
 
-        <p className="text-gray-500 mb-4">
-          Record your voice to describe what happened. Your audio will be
-          automatically processed to extract relevant details.
-        </p>
+          <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+            Record your voice to describe what happened. Your audio will be
+            automatically processed using AI to extract relevant details.
+          </p>
+        </div>
       </div>
 
       {/* Audio Recorder */}

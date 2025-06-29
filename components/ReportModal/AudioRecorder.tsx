@@ -301,15 +301,17 @@ export const AudioRecorder = ({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
         {!audioBlob && !isRecording && (
           <button
             type="button"
             onClick={startRecording}
             disabled={disabled}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 min-w-32 bg-slate-700 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm"
           >
-            <div className="w-3 h-3 bg-white rounded-full"></div>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+            </svg>
             Start Recording
           </button>
         )}
@@ -318,9 +320,11 @@ export const AudioRecorder = ({
           <button
             type="button"
             onClick={stopRecording}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 min-w-32 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 font-medium text-sm"
           >
-            <div className="w-3 h-3 bg-white"></div>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <rect x="6" y="6" width="12" height="12" rx="1" />
+            </svg>
             Stop Recording
           </button>
         )}
@@ -330,16 +334,28 @@ export const AudioRecorder = ({
             <button
               type="button"
               onClick={isPlaying ? stopPlayback : playAudio}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-3 min-w-32 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm"
             >
               {isPlaying ? (
                 <>
-                  <div className="w-3 h-3 bg-white"></div>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect x="6" y="6" width="12" height="12" rx="1" />
+                  </svg>
                   Stop
                 </>
               ) : (
                 <>
-                  <div className="w-0 h-0 border-l-[6px] border-l-white border-y-[4px] border-y-transparent ml-1"></div>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
                   Play
                 </>
               )}
@@ -348,18 +364,22 @@ export const AudioRecorder = ({
             <button
               type="button"
               onClick={deleteRecording}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-3 min-w-32 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium text-sm"
             >
-              <span className="text-sm">×</span>
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
               Delete
             </button>
 
             <button
               type="button"
               onClick={startRecording}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-3 min-w-32 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-all duration-200 font-medium text-sm"
             >
-              <div className="w-3 h-3 bg-white rounded-full"></div>
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7" />
+              </svg>
               Re-record
             </button>
           </>
