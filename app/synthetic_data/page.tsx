@@ -89,8 +89,9 @@ export default function SyntheticDataPage() {
 
   function generateSyntheticLocation(i: number) {
     // 51.5072° N, 0.1276° W
-    const n = 51.5072 + (Math.random()*0.1) - 0.05;
-    const w = 0.1276 + (Math.random()*0.1) - 0.05;
+    //51.4939726&lng=-0.0733479
+    const n = 51.4939726 + Math.random() - 0.5;
+    const w = -0.0733479 + Math.random() - 0.5;
 
     return `POINT(${n} ${w})`
   }
