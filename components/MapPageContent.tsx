@@ -4,7 +4,7 @@ import { NearbyReportsSidebar } from "./NearbyReportsSidebar";
 import { InteractiveMap } from "./InteractiveMap";
 import { ReportButton } from "./ReportButton";
 import { ReportModal } from "./ReportModal/ReportModal";
-
+import { RealtimeTest } from "./RealtimeTest";
 import { useReports } from "../hooks/useReports";
 import { useMapBounds } from "../hooks/useMapBounds";
 import { useRealtimeReports } from "../hooks/useRealtimeReports";
@@ -14,13 +14,7 @@ export const MapPageContent = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const {
-    reports,
-    isLoadingReports,
-    loadReports,
-    addReport,
-    updateReportPhotos,
-  } = useReports();
+  const { reports, isLoadingReports, loadReports, addReport } = useReports();
   const { mapBounds, setMapBounds, nearbyReports } = useMapBounds(reports);
 
   // Stable callback for new reports
@@ -32,19 +26,9 @@ export const MapPageContent = () => {
     [addReport]
   );
 
-  // Stable callback for photo updates
-  const handleReportPhotosUpdate = useCallback(
-    (reportId: string, photos: any[]) => {
-      console.log("Updating photos for report:", reportId, photos);
-      updateReportPhotos(reportId, photos);
-    },
-    [updateReportPhotos]
-  );
-
-  // Set up realtime subscription for new reports and photos
+  // Set up realtime subscription for new reports
   const { isConnected } = useRealtimeReports({
     onNewReport: handleNewReport,
-    onReportPhotosUpdate: handleReportPhotosUpdate,
     enabled: true,
   });
 
@@ -73,8 +57,7 @@ export const MapPageContent = () => {
               : "bg-red-100 text-red-800"
           }`}
         >
-          Realtime:{" "}
-          {isConnected ? "Connected (Reports + Photos)" : "Disconnected"}
+          Realtime: {isConnected ? "Connected" : "Disconnected"}
         </div>
       )}
 
@@ -123,6 +106,9 @@ export const MapPageContent = () => {
         onClose={() => setIsReportModalOpen(false)}
         onReportSubmitted={loadReports}
       />
+
+      {/* Temporary debug component */}
+      <RealtimeTest />
     </main>
   );
 };
