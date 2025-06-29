@@ -1,6 +1,7 @@
-import { FormEvent } from "react";
+import { FormEvent, ChangeEvent } from "react";
 import { ReportFormData } from "@/types";
 import { AudioRecorder } from "./ReportModal/AudioRecorder";
+import { ImageUpload } from "./ReportModal/ImageUpload";
 
 interface ParsedFields {
   location?: string;
@@ -25,6 +26,9 @@ interface AudioReportFormProps {
   isParsing: boolean;
   formData: ReportFormData;
   onInputChange: (field: string, value: string | boolean) => void;
+  selectedImages: File[];
+  onImageSelect: (event: ChangeEvent<HTMLInputElement>) => void;
+  onRemoveImage: (index: number) => void;
 }
 
 export default function AudioReportForm({
@@ -37,6 +41,9 @@ export default function AudioReportForm({
   isParsing,
   formData,
   onInputChange,
+  selectedImages,
+  onImageSelect,
+  onRemoveImage,
 }: AudioReportFormProps) {
   const isProcessing = isTranscribing || isParsing;
 
@@ -229,6 +236,15 @@ export default function AudioReportForm({
           </div>
         </div>
       )}
+
+      {/* Attach Photos */}
+      <div>
+        <ImageUpload
+          selectedImages={selectedImages}
+          onImageSelect={onImageSelect}
+          onRemoveImage={onRemoveImage}
+        />
+      </div>
 
       {/* CrimeStoppers Checkbox */}
       <div className="flex items-start space-x-3">
