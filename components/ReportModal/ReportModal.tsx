@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/client";
 import { ReportFormData, OSMPlace } from "@/types";
 import ReportForm from "./ReportForm";
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -102,7 +103,7 @@ export const ReportModal = ({
       setIsParsing(false);
 
       // Show user-friendly error
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Failed to process audio. Please try again."
@@ -135,13 +136,13 @@ export const ReportModal = ({
     const validFiles = files.filter((file) => {
       // Check file type
       if (!file.type.startsWith("image/")) {
-        alert(`${file.name} is not an image file`);
+        toast.error(`${file.name} is not an image file`);
         return false;
       }
 
       // Check file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name} is too large. Maximum size is 5MB.`);
+        toast.error(`${file.name} is too large. Maximum size is 5MB.`);
         return false;
       }
 
@@ -150,7 +151,7 @@ export const ReportModal = ({
 
     // Check total count
     if (selectedImages.length + validFiles.length > 5) {
-      alert("Maximum 5 images allowed per report");
+      toast.error("Maximum 5 images allowed per report");
       return;
     }
 
@@ -241,14 +242,14 @@ export const ReportModal = ({
       if (formData.inputMode === "text") {
         // Simple text mode - only needs whatHappened
         if (!formData.whatHappened.trim()) {
-          alert("Please describe what happened");
+          toast.error("Please describe what happened");
           setIsUploading(false);
           return;
         }
       } else if (formData.inputMode === "manual") {
         // Manual/detailed mode - needs full validation
         if (!formData.whatHappened.trim()) {
-          alert("Please describe what happened");
+          toast.error("Please describe what happened");
           setIsUploading(false);
           return;
         }
@@ -266,13 +267,13 @@ export const ReportModal = ({
       } else {
         // Audio mode validation
         if (!parsedData) {
-          alert("Please record and process your audio report first");
+          toast.error("Please record and process your audio report first");
           setIsUploading(false);
           return;
         }
 
         if (!parsedData.location && !parsedData.description) {
-          alert(
+          toast.error(
             "Could not extract location information from your audio. Please try recording again with more location details."
           );
           setIsUploading(false);
@@ -421,7 +422,7 @@ export const ReportModal = ({
 
       if (error) {
         console.error("Supabase error:", error);
-        alert(`Error submitting report: ${error.message}`);
+        toast.error(`Error submitting report: ${error.message}`);
         return;
       }
 
@@ -476,11 +477,11 @@ export const ReportModal = ({
 
         if (photoError) {
           console.error("Error inserting photos:", photoError);
-          alert("Report saved but some photos failed to attach");
+          toast.warning("Report saved but some photos failed to attach");
         }
       }
 
-      alert("Report submitted successfully!");
+      toast.success("Report submitted successfully!");
       onClose();
 
       // Reset form
@@ -507,7 +508,7 @@ export const ReportModal = ({
       onReportSubmitted();
     } catch (error) {
       console.error("Unexpected error:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsUploading(false);
     }

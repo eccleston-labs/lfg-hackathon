@@ -17,6 +17,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-leaflet": "^4.2.1",
+    "sonner": "^2.0.5",
     "wkx": "^0.5.0"
   },
   "devDependencies": {
