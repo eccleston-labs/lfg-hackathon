@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MapHeader } from "@/components/MapHeader";
+import { useSearchParams } from "next/navigation";
 
 interface Report {
   id: string;
@@ -42,6 +43,9 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
+  const searchParams = useSearchParams();  
+  const syntheticFilter = searchParams.has("synthetic");
+
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -56,6 +60,13 @@ export default function DashboardPage() {
         console.error("Error loading reports:", reportsError);
         return;
       }
+
+      // Filter out synthetic reports if required
+      console.log(reportsData.length)
+      const filteredReportsData = !syntheticFilter
+        ? reportsData.filter((r) => r.user_id != "f4b8320a-0fad-428a-abd5-9e885817551d")
+        : reportsData;
+      console.log(filteredReportsData.length)
 
       // Load photos for all reports
       const { data: photosData, error: photosError } = await supabase
@@ -76,7 +87,7 @@ export default function DashboardPage() {
       }, {} as Record<string, any[]>);
 
       // Attach photos to reports
-      const reportsWithPhotos = (reportsData || []).map((report) => ({
+      const reportsWithPhotos = (filteredReportsData || []).map((report) => ({
         ...report,
         photos: photosByReportId[report.id] || [],
       }));

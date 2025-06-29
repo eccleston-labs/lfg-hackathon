@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { MapHeader } from "./MapHeader";
 import { NearbyReportsSidebar } from "./NearbyReportsSidebar";
 import { InteractiveMap } from "./InteractiveMap";
@@ -21,7 +22,14 @@ export const MapPageContent = () => {
     addReport,
     updateReportPhotos,
   } = useReports();
-  const { mapBounds, setMapBounds, nearbyReports } = useMapBounds(reports);
+  const searchParams = useSearchParams();  
+  const syntheticFilter = searchParams.has("synthetic");
+  
+  const filteredReports = !syntheticFilter
+    ? reports.filter((r) => r.user_id != "f4b8320a-0fad-428a-abd5-9e885817551d")
+    : reports;
+
+  const { mapBounds, setMapBounds, nearbyReports } = useMapBounds(filteredReports);
 
   // Stable callback for new reports
   const handleNewReport = useCallback(
@@ -85,13 +93,13 @@ export const MapPageContent = () => {
             isSidebarOpen={isSidebarOpen}
             setIsSidebarOpen={setIsSidebarOpen}
             nearbyReports={nearbyReports}
-            reports={reports}
+            reports={filteredReports}
             isLoadingReports={isLoadingReports}
             mapBounds={mapBounds}
           />
         )}
 
-        <InteractiveMap reports={reports} onMapBoundsChange={setMapBounds} />
+        <InteractiveMap reports={filteredReports} onMapBoundsChange={setMapBounds} />
       </div>
 
       {/* Floating Sidebar Toggle Button */}
