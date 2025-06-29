@@ -52,26 +52,6 @@ Extract the following information if mentioned in the transcript:
 - CONTACT: Phone numbers, social media accounts, email addresses, or other contact details mentioned
 - VEHICLE: Any mention of cars, bikes, motorcycles, etc. (respond with true/false)
 - WEAPON: Any mention of weapons, knives, guns, etc. (respond with true/false)
-- CRIME_TYPE: Classify the crime type based on the description. Choose the MOST APPROPRIATE option from this comprehensive list:
-  * "Theft" (shoplifting, pickpocketing, stealing items)
-  * "Burglary" (breaking into buildings/homes)
-  * "Robbery" (theft with force/threat)
-  * "Vehicle Crime" (car theft, vandalism to vehicles, break-ins)
-  * "Vandalism" (graffiti, property damage, destruction)
-  * "Assault" (physical violence, fighting)
-  * "Anti-social Behaviour" (noise, harassment, public disturbance)
-  * "Drug-related" (drug dealing, drug use, drug paraphernalia)
-  * "Fraud" (scams, identity theft, financial fraud)
-  * "Cyber Crime" (online scams, hacking, computer misuse)
-  * "Public Order" (drunk and disorderly, public intoxication)
-  * "Sexual Offences" (harassment, inappropriate behavior)
-  * "Weapon Offences" (knife crime, illegal weapons)
-  * "Domestic Violence" (domestic abuse, family violence)
-  * "Hate Crime" (discrimination, hate speech, targeted harassment)
-  * "Environmental Crime" (fly-tipping, pollution, waste dumping)
-  * "Wildlife Crime" (animal cruelty, illegal hunting, wildlife trafficking)
-  * "Traffic Offences" (dangerous driving, hit and run, traffic violations)
-  * "Other"
 - POSTCODE: Calculate the postcode based on the location information provided
 
 Important rules:
@@ -89,9 +69,6 @@ Respond with valid JSON in exactly this format:
   "peopleInvolved": "extracted people details or null",
   "appearance": "extracted appearance details or null", 
   "contactInfo": "extracted contact info or null",
-  "hasVehicle": false,
-  "hasWeapon": false,
-  "crimeType": "selected crime type from the list"
   "postcode": "calculated postcode"
 }`;
 
