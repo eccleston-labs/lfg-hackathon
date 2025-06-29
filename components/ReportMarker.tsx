@@ -41,78 +41,128 @@ export const ReportMarker = ({ report }: ReportMarkerProps) => {
   return (
     <Marker key={report.id} position={coords} icon={simpleIcon}>
       <Popup>
-        <div className="p-2 max-w-xs">
-          <div className="font-bold text-lg mb-2 capitalize">
-            {report.crime_type || "Crime Report"}
+        <div className="w-80 -m-3">
+          {/* Header Section */}
+          <div className="bg-gray-50 px-4 py-3 rounded-t-lg border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 capitalize">
+                {report.crime_type || "Crime Report"}
+              </h3>
+              <div className="flex items-center gap-2">
+                {report.has_vehicle && (
+                  <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+                    🚗 Vehicle
+                  </span>
+                )}
+                {report.has_weapon && (
+                  <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+                    ⚠️ Weapon
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* AI Summary */}
-          {report.ai_summary && (
-            <div className="text-sm text-blue-700 font-medium mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
-              <div className="flex items-start gap-2">
-                <span className="text-blue-500 text-xs">🤖</span>
-                <span className="italic">{report.ai_summary}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="font-semibold">Location:</span> {report.postcode}
-              {report.location_hint && ` - ${report.location_hint}`}
-            </div>
-            {report.time_description && (
+          {/* Content Section */}
+          <div className="px-4 py-3 space-y-3">
+            {/* Location & Time */}
+            <div className="grid grid-cols-1 gap-2">
               <div>
-                <span className="font-semibold">When:</span>{" "}
-                {report.time_description}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-gray-400">📍</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    Location
+                  </span>
+                </div>
+                <p className="text-gray-900 pl-6">
+                  {report.postcode}
+                  {report.location_hint && (
+                    <span className="text-gray-600">
+                      {" "}
+                      • {report.location_hint}
+                    </span>
+                  )}
+                </p>
               </div>
-            )}
-            <div>
-              <span className="font-semibold">Description:</span>{" "}
-              {report.raw_text}
+
+              {report.time_description && (
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-gray-400">🕐</span>
+                    <span className="text-sm font-semibold text-gray-700">
+                      When
+                    </span>
+                  </div>
+                  <p className="text-gray-900 pl-6">
+                    {report.time_description}
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Description */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-gray-400">📝</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  Description
+                </span>
+              </div>
+              <p className="text-gray-900 pl-6">{report.raw_text}</p>
+            </div>
+
+            {/* People Description */}
             {report.people_appearance && (
               <div>
-                <span className="font-semibold">Description of people:</span>{" "}
-                {report.people_appearance}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-gray-400">👤</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    People Involved
+                  </span>
+                </div>
+                <p className="text-gray-900 pl-6">{report.people_appearance}</p>
               </div>
             )}
 
-            {/* Images */}
+            {/* Photos */}
             {report.photos && report.photos.length > 0 && (
               <div>
-                <span className="font-semibold">Photos:</span>
-                <div className="mt-2 grid grid-cols-2 gap-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-gray-400">📷</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    Photos ({report.photos.length})
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pl-6">
                   {report.photos.map((photo, index) => (
-                    <img
+                    <div
                       key={index}
-                      src={photo.file_path}
-                      alt={`Report photo ${index + 1}`}
-                      className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75"
-                      onClick={() =>
-                        report.photos && setModalImage(photo.file_path)
-                      }
-                    />
+                      className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => setModalImage(photo.file_path)}
+                    >
+                      <img
+                        src={photo.file_path}
+                        alt={`Report photo ${index + 1}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+          </div>
 
-            <div className="flex gap-2 mt-2">
-              {report.has_vehicle && (
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-                  Vehicle
-                </span>
-              )}
-              {report.has_weapon && (
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-                  Weapon
-                </span>
-              )}
-            </div>
-            <div className="text-xs text-gray-500 mt-2">
-              Reported: {new Date(report.created_at).toLocaleDateString()}
-            </div>
+          {/* Footer */}
+          <div className="bg-gray-50 px-4 py-3 rounded-b-lg border-t border-gray-200">
+            <p className="text-xs text-gray-500 text-center">
+              Reported on{" "}
+              {new Date(report.created_at).toLocaleDateString("en-GB", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
           </div>
         </div>
       </Popup>
