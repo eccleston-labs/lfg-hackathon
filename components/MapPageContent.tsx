@@ -13,6 +13,7 @@ import { Report } from "@/types";
 export const MapPageContent = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { reports, isLoadingReports, loadReports, addReport } = useReports();
   const { mapBounds, setMapBounds, nearbyReports } = useMapBounds(reports);
@@ -46,20 +47,10 @@ export const MapPageContent = () => {
 
   return (
     <main className="h-screen flex flex-col">
-      <MapHeader />
-
-      {/* Realtime Status Indicator (dev only) */}
-      {process.env.NODE_ENV === "development" && (
-        <div
-          className={`fixed top-2 right-2 z-[9999] px-2 py-1 rounded text-xs ${
-            isConnected
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          Realtime: {isConnected ? "Connected" : "Disconnected"}
-        </div>
-      )}
+      <MapHeader
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
@@ -79,10 +70,16 @@ export const MapPageContent = () => {
 
       {/* Floating Sidebar Toggle Button */}
       <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className={`fixed top-20 z-5000 z-[1000] bg-white text-black p-3 rounded-lg border-2 border-gray-300 hover:bg-gray-100 shadow-lg ${
+        onClick={() => {
+          setIsSidebarOpen(!isSidebarOpen);
+          // Close mobile menu when opening sidebar to prevent conflicts
+          if (!isSidebarOpen && isMobileMenuOpen) {
+            setIsMobileMenuOpen(false);
+          }
+        }}
+        className={`fixed z-[1000] bg-white text-black p-3 rounded-lg border-2 border-gray-300 hover:bg-gray-100 shadow-lg transition-all duration-200 ${
           isSidebarOpen ? "left-[336px]" : "left-4"
-        }`}
+        } ${isMobileMenuOpen ? "top-[220px]" : "top-20"}`}
       >
         <svg
           className="w-6 h-6"
@@ -106,9 +103,6 @@ export const MapPageContent = () => {
         onClose={() => setIsReportModalOpen(false)}
         onReportSubmitted={loadReports}
       />
-
-      {/* Temporary debug component */}
-      <RealtimeTest />
     </main>
   );
 };
