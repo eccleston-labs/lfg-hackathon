@@ -15,6 +15,7 @@ export const AudioRecorder = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -22,10 +23,13 @@ export const AudioRecorder = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Check microphone permission on mount
-    checkMicrophonePermission();
+    // Check microphone permission on mount with delay for mobile
+    const timer = setTimeout(() => {
+      checkMicrophonePermission();
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       // Cleanup on unmount
       stopRecording();
       if (streamRef.current) {
@@ -39,31 +43,108 @@ export const AudioRecorder = ({
 
   const checkMicrophonePermission = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // First, try to use the Permissions API if available (better for mobile)
+      if ("permissions" in navigator) {
+        try {
+          const permissionStatus = await navigator.permissions.query({
+            name: "microphone" as PermissionName,
+          });
+          if (permissionStatus.state === "granted") {
+            setHasPermission(true);
+            setPermissionError(null);
+            return;
+          } else if (permissionStatus.state === "denied") {
+            setHasPermission(false);
+            setPermissionError(
+              "Microphone access was denied. Please check your browser settings."
+            );
+            return;
+          }
+          // If 'prompt', we'll fall through to getUserMedia test
+        } catch (permErr) {
+          console.log(
+            "Permissions API not fully supported, falling back to getUserMedia test"
+          );
+        }
+      }
+
+      // Fallback to getUserMedia test with mobile-optimized constraints
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          // Use lower sample rate for mobile compatibility
+          sampleRate: { ideal: 44100, min: 8000 },
+        },
+      });
+
       setHasPermission(true);
-      stream.getTracks().forEach((track) => track.stop()); // Stop the test stream
-    } catch (error) {
-      console.error("Microphone permission denied:", error);
+      setPermissionError(null);
+
+      // Clean up test stream
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (error: any) {
+      console.error("Microphone permission check failed:", error);
       setHasPermission(false);
+
+      // Provide more specific error messages based on error type
+      if (error.name === "NotAllowedError") {
+        setPermissionError(
+          "Microphone access was denied. Please allow microphone access and try again."
+        );
+      } else if (error.name === "NotFoundError") {
+        setPermissionError(
+          "No microphone found. Please check your device has a microphone."
+        );
+      } else if (error.name === "NotReadableError") {
+        setPermissionError(
+          "Microphone is being used by another application. Please close other apps using the microphone."
+        );
+      } else {
+        setPermissionError(
+          "Unable to access microphone. Please check your browser settings and try again."
+        );
+      }
     }
   };
 
   const startRecording = async () => {
     try {
+      setPermissionError(null);
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 44100,
+          autoGainControl: true,
+          // Mobile-friendly sample rate
+          sampleRate: { ideal: 44100, min: 8000 },
         },
       });
 
       streamRef.current = stream;
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
-      });
+      // Check if MediaRecorder supports webm, fall back to other formats for mobile
+      let mimeType = "audio/webm;codecs=opus";
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        // Try alternative formats for mobile browsers
+        const alternatives = [
+          "audio/webm",
+          "audio/mp4",
+          "audio/aac",
+          "audio/mpeg",
+          "audio/wav",
+        ];
 
+        for (const type of alternatives) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
+          }
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       const chunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -73,7 +154,7 @@ export const AudioRecorder = ({
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "audio/webm;codecs=opus" });
+        const blob = new Blob(chunks, { type: mimeType });
         onAudioRecorded(blob);
 
         // Stop all tracks
@@ -84,14 +165,32 @@ export const AudioRecorder = ({
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      setHasPermission(true); // Update permission state on successful recording start
 
       // Start timer
       intervalRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting recording:", error);
       setHasPermission(false);
+
+      // Provide specific error messages
+      if (error.name === "NotAllowedError") {
+        setPermissionError(
+          "Microphone access was denied. Please allow microphone access and try again."
+        );
+      } else if (error.name === "NotFoundError") {
+        setPermissionError(
+          "No microphone found. Please check your device has a microphone."
+        );
+      } else if (error.name === "NotReadableError") {
+        setPermissionError(
+          "Microphone is being used by another application. Please close other apps using the microphone."
+        );
+      } else {
+        setPermissionError("Failed to start recording. Please try again.");
+      }
     }
   };
 
@@ -148,6 +247,7 @@ export const AudioRecorder = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Show permission error state
   if (hasPermission === false) {
     return (
       <div className="border-2 border-red-200 rounded-lg p-4 bg-red-50">
@@ -155,16 +255,34 @@ export const AudioRecorder = ({
           Microphone Access Required
         </div>
         <div className="text-sm text-red-600 mb-3">
-          Please allow microphone access to record audio. Check your browser
-          settings and reload the page.
+          {permissionError || "Please allow microphone access to record audio."}
         </div>
-        <button
-          type="button"
-          onClick={checkMicrophonePermission}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-        >
-          Try Again
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={checkMicrophonePermission}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+          >
+            Try Again
+          </button>
+          <div className="text-xs text-red-500">
+            On mobile: Tap "Try Again" and allow microphone access when prompted
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while checking permissions
+  if (hasPermission === null) {
+    return (
+      <div className="border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+          <span className="text-sm text-gray-600">
+            Checking microphone access...
+          </span>
+        </div>
       </div>
     );
   }
@@ -187,7 +305,7 @@ export const AudioRecorder = ({
           <button
             type="button"
             onClick={startRecording}
-            disabled={disabled || hasPermission === null}
+            disabled={disabled}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <div className="w-3 h-3 bg-white rounded-full"></div>
