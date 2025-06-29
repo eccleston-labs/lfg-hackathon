@@ -17,9 +17,7 @@ export const PlaceSearch = ({
     selectedPlace?.display_name || ""
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,8 +31,8 @@ export const PlaceSearch = ({
 
   // Handle search with debouncing
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
     if (searchQuery.trim() && !selectedPlace) {
@@ -42,15 +40,15 @@ export const PlaceSearch = ({
         searchPlaces(searchQuery);
         setIsDropdownOpen(true);
       }, 300);
-      setSearchTimeout(timeout);
+      searchTimeoutRef.current = timeout;
     } else if (!searchQuery.trim()) {
       clearResults();
       setIsDropdownOpen(false);
     }
 
     return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
     };
   }, [searchQuery, searchPlaces, clearResults, selectedPlace]);

@@ -266,7 +266,8 @@ export const AudioRecorder = ({
             Try Again
           </button>
           <div className="text-xs text-red-500">
-            On mobile: Tap "Try Again" and allow microphone access when prompted
+            On mobile: Tap &quot;Try Again&quot; and allow microphone access
+            when prompted
           </div>
         </div>
       </div>
